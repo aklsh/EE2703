@@ -21,6 +21,15 @@ VCCS = "G"
 CCVS = "H"
 CCCS = "F"
 
+# Convert engineer's format to math
+def enggToMath(enggNumber):
+    lenEnggNumber = len(enggNumber)
+    base = int(enggNumber[0:lenEnggNumber-1])
+    if enggNumber[lenEnggNumber-1] == 'k':
+        return base*1000
+    elif enggNumber[lenEnggNumber-1] == 'm':
+        return
+
 # Extracting the tokens from a Line
 def line2tokens(spiceLine):
     tokens = []
@@ -56,6 +65,14 @@ def line2tokens(spiceLine):
     else:
         return []
 
+def printCktDefn(SPICELinesTokens):
+    for x in SPICELinesTokens[::-1]:
+        for y in x[::-1]:
+            print(y, end=' ')
+        print('')
+    print('')
+    return
+
 if __name__ == "__main__":
 
     # checking number of command line arguments
@@ -80,10 +97,10 @@ if __name__ == "__main__":
 
                         SPICELinesActual = SPICELines[identifier1+1:identifier2]
                         SPICELinesTokens = [line2tokens(line) for line in SPICELinesActual]
-                        for x in SPICELinesTokens[::-1]:
-                            for y in x[::-1]:
-                                print(y, end=' ')
-                            print('')
+
+                        # Printing Circuit Definition in Reverse Order
+                        print("\nThe Circuit Definition is:\n")
+                        printCktDefn(SPICELinesTokens)
                     except ValueError:
                         print("Netlist does not abide to given format!")
         except FileNotFoundError:
