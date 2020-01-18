@@ -1,9 +1,11 @@
-# -------------------------------------
-# Assignment 1 - EE2703 (Jan-May 2020)
-# Done by Akilesh Kannan (EE18B122)
-# Created on 16/01/20
-# Last Modified on 17/01/20
-# -------------------------------------
+'''
+-------------------------------------
+ Assignment 1 - EE2703 (Jan-May 2020)
+ Done by Akilesh Kannan (EE18B122)
+ Created on 16/01/20
+ Last Modified on 17/01/20
+-------------------------------------
+'''
 
 # importing necessary libraries
 import sys
@@ -20,15 +22,6 @@ VCVS = "E"
 VCCS = "G"
 CCVS = "H"
 CCCS = "F"
-
-# Convert engineer's format to math
-def enggToMath(enggNumber):
-    lenEnggNumber = len(enggNumber)
-    base = int(enggNumber[0:lenEnggNumber-1])
-    if enggNumber[lenEnggNumber-1] == 'k':
-        return base*1000
-    elif enggNumber[lenEnggNumber-1] == 'm':
-        return
 
 # Extracting the tokens from a Line
 def line2tokens(spiceLine):
