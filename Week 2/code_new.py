@@ -3,7 +3,7 @@
  Assignment 2 - EE2703 (Jan-May 2020)
  Done by Akilesh Kannan (EE18B122)
  Created on 18/01/20
- Last Modified on 18/01/20
+ Last Modified on 20/01/20
 -------------------------------------
 '''
 
@@ -31,44 +31,44 @@ CCCS = "F"
 class resistor:
     def __init__(self, name, n1, n2, val):
         self.name = name
-        self.value = val
+        self.value = float(val)
         self.node1 = n1
         self.node2 = n2
 
 class inductor:
     def __init__(self, name, n1, n2, val):
         self.name = name
-        self.value = val
+        self.value = float(val)
         self.node1 = n1
         self.node2 = n2
 
 class capacitor:
     def __init__(self, name, n1, n2, val):
         self.name = name
-        self.value = val
+        self.value = float(val)
         self.node1 = n1
         self.node2 = n2
 
 class voltageSource:
     def __init__(self, name, n1, n2, val, phase=0):
         self.name = name
-        self.value = val
+        self.value = float(val)
         self.node1 = n1
         self.node2 = n2
-        self.phase = phase
+        self.phase = float(phase)
 
 class currentSource:
     def __init__(self, name, n1, n2, val, phase=0):
         self.name = name
-        self.value = val
+        self.value = float(val)
         self.node1 = n1
         self.node2 = n2
-        self.phase = phase
+        self.phase = float(phase)
 
 class vcvs:
     def __init__(self, name, n1, n2, n3, n4, val):
         self.name = name
-        self.value = val
+        self.value = float(val)
         self.node1 = n1
         self.node2 = n2
         self.node3 = n3
@@ -77,7 +77,7 @@ class vcvs:
 class vccs:
     def __init__(self, name, n1, n2, n3, n4, val):
         self.name = name
-        self.value = val
+        self.value = float(val)
         self.node1 = n1
         self.node2 = n2
         self.node3 = n3
@@ -86,7 +86,7 @@ class vccs:
 class ccvs:
     def __init__(self, name, n1, n2, vName, val):
         self.name = name
-        self.value = val
+        self.value = float(val)
         self.node1 = n1
         self.node2 = n2
         self.vSource = vName
@@ -94,7 +94,7 @@ class ccvs:
 class cccs:
     def __init__(self, name, n1, n2, vName, val):
         self.name = name
-        self.value = val
+        self.value = float(val)
         self.node1 = n1
         self.node2 = n2
         self.vSource = vName
@@ -112,8 +112,8 @@ def enggToMath(enggNumber):
         return float(enggNumber)
 
 # Print the Circuit Definition in the required format
-def printCktDefn(SPICELinesTokens):
-    for x in SPICELinesTokens:
+def printCktDefn(tokenedSPICELines):
+    for x in tokenedSPICELines:
         for y in x:
             print(y, end=' ')
         print('')
@@ -154,29 +154,49 @@ if __name__ == "__main__":
 
                         # Resistor
                         if lineTokens[0][0] == RESISTOR:
-                            circuitComponents[RESISTOR].append(resistor(lineTokens[0], lineTokens[1], lineTokens[2], float(lineTokens[3])))
+                            circuitComponents[RESISTOR].append(resistor(lineTokens[0], lineTokens[1], lineTokens[2], lineTokens[3]))
 
                         # Capacitor
                         elif lineTokens[0][0] == CAPACITOR:
-                            circuitComponents[CAPACITOR].append(capacitor(lineTokens[0], lineTokens[1], lineTokens[2], float(lineTokens[3])))
+                            circuitComponents[CAPACITOR].append(capacitor(lineTokens[0], lineTokens[1], lineTokens[2], lineTokens[3]))
 
                         # Inductor
                         elif lineTokens[0][0] == INDUCTOR:
-                            circuitComponents[INDUCTOR].append(inductor(lineTokens[0], lineTokens[1], lineTokens[2], float(lineTokens[3])))
+                            circuitComponents[INDUCTOR].append(inductor(lineTokens[0], lineTokens[1], lineTokens[2], lineTokens[3]))
 
                         # Voltage Source
                         elif lineTokens[0][0] == IVS:
-                            if len(lineTokens == 5): # DC Source
-                                circuitComponents[IVS].append(IVS(lineTokens[0], lineTokens[1], lineTokens[2], lineTokens[4]))
-                            elif len(lineTokens == 6): # AC Source
-                                circuitComponents[IVS].append(IVS(lineTokens[0], lineTokens[1], lineTokens[2], lineTokens[4], phase=float(lineTokens[5])))
+                            if len(lineTokens) == 5: # DC Source
+                                circuitComponents[IVS].append(voltageSource(lineTokens[0], lineTokens[1], lineTokens[2], lineTokens[4]))
+                            elif len(lineTokens) == 6: # AC Source
+                                circuitComponents[IVS].append(voltageSource(lineTokens[0], lineTokens[1], lineTokens[2], lineTokens[4], lineTokens[5]))
 
                         # Current Source
                         elif lineTokens[0][0] == ICS:
-                            if len(lineTokens == 5): # DC Source
-                                circuitComponents[IVS].append(ICS(lineTokens[0], lineTokens[1], lineTokens[2], lineTokens[4]))
-                            elif len(lineTokens == 6): # AC Source
-                                circuitComponents[IVS].append(ICS(lineTokens[0], lineTokens[1], lineTokens[2], lineTokens[4], phase=float(lineTokens[5])))
+                            if len(lineTokens) == 5: # DC Source
+                                circuitComponents[ICS].append(currentSource(lineTokens[0], lineTokens[1], lineTokens[2], lineTokens[4]))
+                            elif len(lineTokens) == 6: # AC Source
+                                circuitComponents[ICS].append(currentSource(lineTokens[0], lineTokens[1], lineTokens[2], lineTokens[4], lineTokens[5]))
+
+                        # VCVS
+                        elif lineTokens[0][0] == VCVS:
+                            circuitComponents[VCVS].append(vcvs(lineTokens[0], lineTokens[1], lineTokens[2], lineTokens[3], lineTokens[4], lineTokens[5]))
+
+                        # VCCS
+                        elif lineTokens[0][0] == VCCS:
+                            circuitComponents[VCCS].append(vcvs(lineTokens[0], lineTokens[1], lineTokens[2], lineTokens[3], lineTokens[4], lineTokens[5]))
+
+                        # CCVS
+                        elif lineTokens[0][0] == CCVS:
+                            circuitComponents[CCVS].append(ccvs(lineTokens[0], lineTokens[1], lineTokens[2], lineTokens[3], lineTokens[4]))
+
+                        # CCCS
+                        elif lineTokens[0][0] == CCCS:
+                            circuitComponents[CCCS].append(cccs(lineTokens[0], lineTokens[1], lineTokens[2], lineTokens[3], lineTokens[4]))
+
+                        # Erroneous Component Name
+                        else:
+                            sys.exit("Wrong Component Given. ABORT!")
 
                 except ValueError:
                     sys.exit("Netlist does not abide to given format!")
