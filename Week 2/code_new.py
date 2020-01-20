@@ -111,28 +111,6 @@ def enggToMath(enggNumber):
     else:
         return float(enggNumber)
 
-# Extracting the tokens from a Line
-def line2tokens(spiceLine):
-    tokens = []
-    allWords = spiceLine.split()
-
-    if allWords[0][0] == RESISTOR or allWords[0][0] == CAPACITOR or allWords[0][0] == INDUCTOR:
-        return [allWords[0], allWords[1], allWords[2], float(allWords[3])]
-    elif allWords[0][0] == IVS or allWords[0][0] == ICS:
-        if allWords[3] == "dc":
-            return [allWords[0], allWords[1], allWords[2], float(allWords[4])]
-        else:
-            return [allWords[0], allWords[1], allWords[2], float(allWords[4]), float(allWords[5])]
-
-# Extract the frequency and name of the AC component from a SPICE Line
-def getComponentAndFrequency(listOfAllACLines):
-    table = []
-    for x in listOfAllACLines:
-        [componentName, frequency] = x.split()
-        table.append(componentName)
-        table.append(float(frequency))
-    return table
-
 # Print the Circuit Definition in the required format
 def printCktDefn(SPICELinesTokens):
     for x in SPICELinesTokens:
@@ -143,7 +121,6 @@ def printCktDefn(SPICELinesTokens):
     return
 
 if __name__ == "__main__":
-
     # checking number of command line arguments
     if len(sys.argv)!=2 :
         sys.exit("Invalid number of arguments!")
@@ -151,6 +128,8 @@ if __name__ == "__main__":
         try:
             circuitFile = sys.argv[1]
             circuitFreq = 1e-100
+            circuitComponents = { RESISTOR: [], CAPACITOR: [], INDUCTOR: [], IVS: [], ICS: [], VCVS: [], VCCS: [], CCVS: [], CCCS: [] }
+            circuitNodes = []
             # checking if given netlist file is of correct type
             if (not circuitFile.endswith(".netlist")):
                 print("Wrong file type!")
@@ -160,27 +139,45 @@ if __name__ == "__main__":
                     for line in f.readlines():
                         SPICELines.append(line.split('#')[0].split('\n')[0])
                 try:
-                    # finding the location of the identifiers
+                    # Finding the location of the identifiers
                     identifier1 = SPICELines.index(CIRCUIT_START)
                     identifier2 = SPICELines.index(CIRCUIT_END)
 
-                    SPICELinesActual = SPICELines[identifier1+1:identifier2]
-                    SPICELinesTokens = [line2tokens(line) for line in SPICELinesActual]
-                    SPICELinesACLines = [line.split('.ac ')[1] for line in SPICELines if ".ac" in line]
+                    circuitBody = SPICELines[identifier1+1:identifier2]
+                    for line in circuitBody:
+                        lineTokens = line.split()
 
-                    if SPICELinesACLines:
-                        acComponents = getComponentAndFrequency(SPICELinesACLines)
+                        if lineTokens[1] not in circuitNodes:
+                            circuitNodes.append(lineTokens[1])
+                        if lineTokens[2] not in circuitNodes:
+                            circuitNodes.append(lineTokens[2])
 
-                    circuitFreq = acComponents[1]
+                        # Resistor
+                        if lineTokens[0][0] == RESISTOR:
+                            circuitComponents[RESISTOR].append(resistor(lineTokens[0], lineTokens[1], lineTokens[2], float(lineTokens[3])))
 
-                    for x in SPICELinesTokens:
-                        if x[0][0] == IVS or x[0][0] == ICS:
-                            if x[0] in acComponents:
-                                x.append(acComponents[acComponents.index(x[0])+1])
+                        # Capacitor
+                        elif lineTokens[0][0] == CAPACITOR:
+                            circuitComponents[CAPACITOR].append(capacitor(lineTokens[0], lineTokens[1], lineTokens[2], float(lineTokens[3])))
 
-                    # Printing Circuit Definition in Reverse Order
-                    print("\nThe Circuit Definition is:\n")
-                    printCktDefn(SPICELinesTokens)
+                        # Inductor
+                        elif lineTokens[0][0] == INDUCTOR:
+                            circuitComponents[INDUCTOR].append(inductor(lineTokens[0], lineTokens[1], lineTokens[2], float(lineTokens[3])))
+
+                        # Voltage Source
+                        elif lineTokens[0][0] == IVS:
+                            if len(lineTokens == 5): # DC Source
+                                circuitComponents[IVS].append(IVS(lineTokens[0], lineTokens[1], lineTokens[2], lineTokens[4]))
+                            elif len(lineTokens == 6): # AC Source
+                                circuitComponents[IVS].append(IVS(lineTokens[0], lineTokens[1], lineTokens[2], lineTokens[4], phase=float(lineTokens[5])))
+
+                        # Current Source
+                        elif lineTokens[0][0] == ICS:
+                            if len(lineTokens == 5): # DC Source
+                                circuitComponents[IVS].append(ICS(lineTokens[0], lineTokens[1], lineTokens[2], lineTokens[4]))
+                            elif len(lineTokens == 6): # AC Source
+                                circuitComponents[IVS].append(ICS(lineTokens[0], lineTokens[1], lineTokens[2], lineTokens[4], phase=float(lineTokens[5])))
+
                 except ValueError:
                     sys.exit("Netlist does not abide to given format!")
         except FileNotFoundError:
