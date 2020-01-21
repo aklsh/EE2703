@@ -70,7 +70,7 @@ if __name__ == "__main__":
 
     # checking number of command line arguments
     if len(sys.argv)!=2 :
-        sys.exit("Invalid number of arguments!")
+        sys.exit("Invalid number of arguments! Pass the netlist file as the second argument.")
     else:
         try:
             circuitFile = sys.argv[1]
@@ -95,6 +95,6 @@ if __name__ == "__main__":
                         print("\nThe Circuit Definition is:\n")
                         printCktDefn(SPICELinesTokens)
                     except ValueError:
-                        print("Netlist does not abide to given format!")
+                        print("Netlist does not abide to given format! Make sure to have .circuit and .end lines in the file.")
         except FileNotFoundError:
-            print("Given file does not exist! Abort")
+            print("Given file does not exist! Please check if you have entered the name of the netlist file properly.")
