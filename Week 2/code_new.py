@@ -34,6 +34,8 @@ class resistor:
         self.value = float(val)
         self.node1 = n1
         self.node2 = n2
+    def printComponent(self):
+        print("Name: {0}\nValue: {1}\nNode 1: {2}\nNode 2: {3}\n\n".format(self.name, self.value, self.node1, self.node2))
 
 class inductor:
     def __init__(self, name, n1, n2, val):
@@ -41,6 +43,8 @@ class inductor:
         self.value = float(val)
         self.node1 = n1
         self.node2 = n2
+    def printComponent(self):
+        print("Name: {0}\nValue: {1}\nNode 1: {2}\nNode 2: {3}\n\n".format(self.name, self.value, self.node1, self.node2))
 
 class capacitor:
     def __init__(self, name, n1, n2, val):
@@ -48,6 +52,8 @@ class capacitor:
         self.value = float(val)
         self.node1 = n1
         self.node2 = n2
+    def printComponent(self):
+        print("Name: {0}\nValue: {1}\nNode 1: {2}\nNode 2: {3}\n\n".format(self.name, self.value, self.node1, self.node2))
 
 class voltageSource:
     def __init__(self, name, n1, n2, val, phase=0):
@@ -56,6 +62,8 @@ class voltageSource:
         self.node1 = n1
         self.node2 = n2
         self.phase = float(phase)
+    def printComponent(self):
+        print("Name: {0}\nValue: {1}\nNode 1: {2}\nNode 2: {3}\nPhase: {4}\n\n".format(self.name, self.value, self.node1, self.node2, self.phase))
 
 class currentSource:
     def __init__(self, name, n1, n2, val, phase=0):
@@ -64,6 +72,8 @@ class currentSource:
         self.node1 = n1
         self.node2 = n2
         self.phase = float(phase)
+    def printComponent(self):
+        print("Name: {0}\nValue: {1}\nNode 1: {2}\nNode 2: {3}\nPhase: {4}\n\n".format(self.name, self.value, self.node1, self.node2, self.phase))
 
 class vcvs:
     def __init__(self, name, n1, n2, n3, n4, val):
@@ -73,6 +83,8 @@ class vcvs:
         self.node2 = n2
         self.node3 = n3
         self.node4 = n4
+    def printComponent(self):
+        print("Name: {0}\nValue: {1}\nNode 1: {2}\nNode 2: {3}\nVoltage Source Node 1: {4}\nVoltage Source Node 2: {5}\n\n".format(self.name, self.value, self.node1, self.node2, self.node3, self.node4))
 
 class vccs:
     def __init__(self, name, n1, n2, n3, n4, val):
@@ -82,6 +94,8 @@ class vccs:
         self.node2 = n2
         self.node3 = n3
         self.node4 = n4
+    def printComponent(self):
+        print("Name: {0}\nValue: {1}\nNode 1: {2}\nNode 2: {3}\nVoltage Source Node 1: {4}\nVoltage Source Node 2: {5}\n\n".format(self.name, self.value, self.node1, self.node2, self.node3, self.node4))
 
 class ccvs:
     def __init__(self, name, n1, n2, vName, val):
@@ -90,6 +104,8 @@ class ccvs:
         self.node1 = n1
         self.node2 = n2
         self.vSource = vName
+    def printComponent(self):
+        print("Name: {0}\nValue: {1}\nNode 1: {2}\nNode 2: {3}\nVoltage Source: {4}\n\n".format(self.name, self.value, self.node1, self.node2, self.vSource))
 
 class cccs:
     def __init__(self, name, n1, n2, vName, val):
@@ -98,6 +114,8 @@ class cccs:
         self.node1 = n1
         self.node2 = n2
         self.vSource = vName
+    def printComponent(self):
+        print("Name: {0}\nValue: {1}\nNode 1: {2}\nNode 2: {3}\nVoltage Source: {4}\n\n".format(self.name, self.value, self.node1, self.node2, self.vSource))
 
 # Convert a number in engineer's format to math
 def enggToMath(enggNumber):
@@ -197,6 +215,11 @@ if __name__ == "__main__":
                         # Erroneous Component Name
                         else:
                             sys.exit("Wrong Component Given. ABORT!")
+
+                    # Debugging Print Statements
+                    for x in circuitComponents:
+                        for y in circuitComponents[x]:
+                            y.printComponent()
 
                 except ValueError:
                     sys.exit("Netlist does not abide to given format!")
