@@ -25,7 +25,6 @@ CCCS = "F"
 
 # Extracting the tokens from a Line
 def line2tokens(spiceLine):
-    tokens = []
     allWords = spiceLine.split()
 
     # R, L, C, Independent Sources
