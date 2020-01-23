@@ -309,6 +309,7 @@ if __name__ == "__main__":
 
                         # Printing data output
                         print(pd.DataFrame(x, columns=['Value'], index=circuitNodes+circuitCurrents))
+                        
                     except np.linalg.LinAlgError:
                         print("Singular Matrix Formed! Please check if you have entered the circuit definition correctly!")
 
