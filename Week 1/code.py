@@ -82,7 +82,6 @@ if __name__ == "__main__":
                         SPICELinesTokens = [line2tokens(line) for line in SPICELinesActual]
 
                         # Printing Circuit Definition in Reverse Order
-                        print("\nThe Circuit Definition is:\n")
                         printCktDefn(SPICELinesTokens)
                     except ValueError:
                         print("Netlist does not abide to given format! Make sure to have .circuit and .end lines in the file.")
