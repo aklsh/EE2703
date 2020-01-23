@@ -13,15 +13,6 @@ import sys
 # To improve readability
 CIRCUIT_START = ".circuit"
 CIRCUIT_END = ".end"
-RESISTOR = "R"
-CAPACITOR = "C"
-INDUCTOR = "L"
-IVS = "V"
-ICS = "I"
-VCVS = "E"
-VCCS = "G"
-CCVS = "H"
-CCCS = "F"
 
 # Extracting the tokens from a Line
 def line2tokens(spiceLine):
