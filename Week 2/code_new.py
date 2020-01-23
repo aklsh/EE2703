@@ -3,7 +3,7 @@
  Assignment 2 - EE2703 (Jan-May 2020)
  Done by Akilesh Kannan (EE18B122)
  Created on 18/01/20
- Last Modified on 20/01/20
+ Last Modified on 23/01/20
 -------------------------------------
 '''
 
@@ -26,6 +26,7 @@ VCVS = "E"
 VCCS = "G"
 CCVS = "H"
 CCCS = "F"
+PI = np.pi
 
 # Classes for each circuit component
 class resistor:
@@ -129,15 +130,6 @@ def enggToMath(enggNumber):
     else:
         return float(enggNumber)
 
-# Print the Circuit Definition in the required format
-def printCktDefn(tokenedSPICELines):
-    for x in tokenedSPICELines:
-        for y in x:
-            print(y, end=' ')
-        print('')
-    print('')
-    return
-
 if __name__ == "__main__":
     # checking number of command line arguments
     if len(sys.argv)!=2 :
@@ -152,16 +144,20 @@ if __name__ == "__main__":
             if (not circuitFile.endswith(".netlist")):
                 print("Wrong file type!")
             else:
-                SPICELines = []
+                netlistFileLines = []
                 with open (circuitFile, "r") as f:
                     for line in f.readlines():
-                        SPICELines.append(line.split('#')[0].split('\n')[0])
+                        netlistFileLines.append(line.split('#')[0].split('\n')[0])
+
+                        # Getting frequency, if any
+                        if(line[:3] == '.ac'):
+                            circuitFreq = float(line.split()[2])
                 try:
                     # Finding the location of the identifiers
-                    identifier1 = SPICELines.index(CIRCUIT_START)
-                    identifier2 = SPICELines.index(CIRCUIT_END)
+                    identifier1 = netlistFileLines.index(CIRCUIT_START)
+                    identifier2 = netlistFileLines.index(CIRCUIT_END)
 
-                    circuitBody = SPICELines[identifier1+1:identifier2]
+                    circuitBody = netlistFileLines[identifier1+1:identifier2]
                     for line in circuitBody:
                         lineTokens = line.split()
 
@@ -187,14 +183,14 @@ if __name__ == "__main__":
                             if len(lineTokens) == 5: # DC Source
                                 circuitComponents[IVS].append(voltageSource(lineTokens[0], lineTokens[1], lineTokens[2], lineTokens[4]))
                             elif len(lineTokens) == 6: # AC Source
-                                circuitComponents[IVS].append(voltageSource(lineTokens[0], lineTokens[1], lineTokens[2], lineTokens[4], lineTokens[5]))
+                                circuitComponents[IVS].append(voltageSource(lineTokens[0], lineTokens[1], lineTokens[2], lineTokens[4]/(2*math.sqrt(2)), lineTokens[5]))
 
                         # Current Source
                         elif lineTokens[0][0] == ICS:
                             if len(lineTokens) == 5: # DC Source
                                 circuitComponents[ICS].append(currentSource(lineTokens[0], lineTokens[1], lineTokens[2], lineTokens[4]))
                             elif len(lineTokens) == 6: # AC Source
-                                circuitComponents[ICS].append(currentSource(lineTokens[0], lineTokens[1], lineTokens[2], lineTokens[4], lineTokens[5]))
+                                circuitComponents[ICS].append(currentSource(lineTokens[0], lineTokens[1], lineTokens[2], lineTokens[4]/(2*math.sqrt(2)), lineTokens[5]))
 
                         # VCVS
                         elif lineTokens[0][0] == VCVS:
@@ -216,10 +212,104 @@ if __name__ == "__main__":
                         else:
                             sys.exit("Wrong Component Given. ABORT!")
 
-                    # Debugging Print Statements
-                    for x in circuitComponents:
-                        for y in circuitComponents[x]:
-                            y.printComponent()
+                    # # Printing nodes in the circuit
+                    # print("\nThe nodes in the circuit are: ", end='')
+                    # for x in circuitNodes:
+                    #     print(x, end=' ')
+                    # # Printing the circuit frequency
+                    # print("\n\nThe circuit frequency is: "+str(circuitFreq))
+                    #
+                    # # Printing all circuit components
+                    # print("\nThe circuit components are:\n")
+                    # for x in circuitComponents:
+                    #     for y in circuitComponents[x]:
+                    #         y.printComponent()
+
+                    try:
+                        circuitNodes.remove('GND')
+                        circuitNodes = ['GND'] + circuitNodes
+                    except:
+                        sys.exit("No ground node specified in the circuit!!")
+
+                    nodeNumbers = {circuitNodes[i]:i for i in range(len(circuitNodes))}
+
+                    matrixM = np.zeros((len(circuitNodes)+len(circuitComponents[IVS]), len(circuitNodes)+len(circuitComponents[IVS])), np.complex)
+                    matrixB = np.zeros((len(circuitNodes)+len(circuitComponents[IVS]),), np.complex)
+
+                    # GND Equation
+                    matrixM[0][0] = 1.0
+
+                    # Equations for source voltages
+                    for i in range(len(circuitComponents[IVS])):
+                        source = circuitComponents[IVS][i]
+                        l = len(circuitNodes)
+                        matrixM[l+i][nodeNumbers[source.node1]] = -1.0
+                        matrixM[l+i][nodeNumbers[source.node2]] = 1.0
+                        matrixB[l+i] = cmath.rect(source.value,
+                                                   source.phase*PI/180)
+                    # Resistor Equations
+                    for r in circuitComponents[RESISTOR]:
+                        if r.node1 != 'GND':
+                            matrixM[nodeNumbers[r.node1]][nodeNumbers[r.node1]] += 1/r.value
+                            matrixM[nodeNumbers[r.node1]][nodeNumbers[r.node2]] -= 1/r.value
+                        if r.node2 != 'GND':
+                            matrixM[nodeNumbers[r.node2]][nodeNumbers[r.node1]] -= 1/r.value
+                            matrixM[nodeNumbers[r.node2]][nodeNumbers[r.node2]] += 1/r.value
+
+                    # Capacitor Equations
+                    for c in circuitComponents[CAPACITOR]:
+                        if c.node1 != 'GND':
+                            matrixM[nodeNumbers[c.node1]][nodeNumbers[c.node1]] += complex(0, 2*PI*circuitFreq*c.value)
+                            matrixM[nodeNumbers[c.node1]][nodeNumbers[c.node2]] -= complex(0, 2*PI*circuitFreq*c.value)
+                        if c.node2 != 'GND':
+                            matrixM[nodeNumbers[c.node2]][nodeNumbers[c.node1]] -= complex(0, 2*PI*circuitFreq*c.value)
+                            matrixM[nodeNumbers[c.node2]][nodeNumbers[c.node2]] += complex(0, 2*PI*circuitFreq*c.value)
+
+                    # Inductor Equations
+                    for l in circuitComponents[INDUCTOR]:
+                        if l.node1 != 'GND':
+                            matrixM[nodeNumbers[l.node1]][nodeNumbers[l.node1]] += complex(0, -1.0/(2*PI*circuitFreq*l.value))
+                            matrixM[nodeNumbers[l.node1]][nodeNumbers[l.node2]] -= complex(0, -1.0/(2*PI*circuitFreq*l.value))
+                        if l.node2 != 'GND':
+                            matrixM[nodeNumbers[l.node2]][nodeNumbers[l.node1]] -= complex(0, -1.0/(2*PI*circuitFreq*l.value))
+                            matrixM[nodeNumbers[l.node2]][nodeNumbers[l.node2]] += complex(0, -1.0/(2*PI*circuitFreq*l.value))
+
+                    numNodes = len(circuitNodes)
+
+                    # Voltage Source Equations
+                    for vol in circuitComponents[IVS]:
+                        if(vol.node1 != 'GND'):
+                            matrixM[nodeNumbers[vol.node1]][numNodes] = -1.0
+                        if(vol.node2 != 'GND'):
+                            matrixM[nodeNumbers[vol.node2]][numNodes] = 1.0
+
+                    # Current source equations
+                    for source in circuitComponents[ICS]:
+                        if(source.node1 != 'GND'):
+                            matrixB[nodeNumbers[source.node1]] += cmath.rect(
+                                source.value, source.phase*cmath.pi/180)
+                        if(source.node2 != 'GND'):
+                            matrixB[node_dict[source.node2]] -= cmath.rect(
+                                source.value, source.phase*cmath.pi/180)
+
+                    # for i in range(len(circuitNodes)+len(circuitComponents[IVS])):
+                    #     for j in matrixM[i]:
+                    #         print(j, end=' ')
+                    #     print('')
+
+                    try:
+                        x = np.linalg.solve(matrixM, matrixB)
+                    except:
+                        print("Circuit cannot be solved! Please check if you have provided the correct circuit definition")
+
+                    currents = []
+
+                    # Data for printing clear data as output
+                    for v in circuitComponents[IVS]:
+                        currents.append("I in "+v.name)
+
+                    # Printing data output
+                    print(pd.DataFrame(x, columns=['Value'], index=circuitNodes+currents))
 
                 except ValueError:
                     sys.exit("Netlist does not abide to given format!")
