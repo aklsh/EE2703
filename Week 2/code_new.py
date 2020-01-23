@@ -160,11 +160,13 @@ if __name__ == "__main__":
                     circuitBody = netlistFileLines[identifier1+1:identifier2]
                     for line in circuitBody:
                         lineTokens = line.split()
-
-                        if lineTokens[1] not in circuitNodes:
-                            circuitNodes.append(lineTokens[1])
-                        if lineTokens[2] not in circuitNodes:
-                            circuitNodes.append(lineTokens[2])
+                        try:
+                            if lineTokens[1] not in circuitNodes:
+                                circuitNodes.append(lineTokens[1])
+                            if lineTokens[2] not in circuitNodes:
+                                circuitNodes.append(lineTokens[2])
+                        except IndexError:
+                            continue
 
                         # Resistor
                         if lineTokens[0][0] == RESISTOR:
@@ -181,16 +183,16 @@ if __name__ == "__main__":
                         # Voltage Source
                         elif lineTokens[0][0] == IVS:
                             if len(lineTokens) == 5: # DC Source
-                                circuitComponents[IVS].append(voltageSource(lineTokens[0], lineTokens[1], lineTokens[2], lineTokens[4]))
+                                circuitComponents[IVS].append(voltageSource(lineTokens[0], lineTokens[1], lineTokens[2], float(lineTokens[4])))
                             elif len(lineTokens) == 6: # AC Source
-                                circuitComponents[IVS].append(voltageSource(lineTokens[0], lineTokens[1], lineTokens[2], lineTokens[4]/(2*math.sqrt(2)), lineTokens[5]))
+                                circuitComponents[IVS].append(voltageSource(lineTokens[0], lineTokens[1], lineTokens[2], float(lineTokens[4])/(2*math.sqrt(2)), lineTokens[5]))
 
                         # Current Source
                         elif lineTokens[0][0] == ICS:
                             if len(lineTokens) == 5: # DC Source
-                                circuitComponents[ICS].append(currentSource(lineTokens[0], lineTokens[1], lineTokens[2], lineTokens[4]))
+                                circuitComponents[ICS].append(currentSource(lineTokens[0], lineTokens[1], lineTokens[2], float(lineTokens[4])))
                             elif len(lineTokens) == 6: # AC Source
-                                circuitComponents[ICS].append(currentSource(lineTokens[0], lineTokens[1], lineTokens[2], lineTokens[4]/(2*math.sqrt(2)), lineTokens[5]))
+                                circuitComponents[ICS].append(currentSource(lineTokens[0], lineTokens[1], lineTokens[2], float(lineTokens[4])/(2*math.sqrt(2)), lineTokens[5]))
 
                         # VCVS
                         elif lineTokens[0][0] == VCVS:
@@ -245,8 +247,8 @@ if __name__ == "__main__":
                         l = len(circuitNodes)
                         matrixM[l+i][nodeNumbers[source.node1]] = -1.0
                         matrixM[l+i][nodeNumbers[source.node2]] = 1.0
-                        matrixB[l+i] = cmath.rect(source.value,
-                                                   source.phase*PI/180)
+                        matrixB[l+i] = cmath.rect(source.value, source.phase*PI/180)
+
                     # Resistor Equations
                     for r in circuitComponents[RESISTOR]:
                         if r.node1 != 'GND':
@@ -289,7 +291,7 @@ if __name__ == "__main__":
                             matrixB[nodeNumbers[source.node1]] += cmath.rect(
                                 source.value, source.phase*cmath.pi/180)
                         if(source.node2 != 'GND'):
-                            matrixB[node_dict[source.node2]] -= cmath.rect(
+                            matrixB[nodeNumbers[source.node2]] -= cmath.rect(
                                 source.value, source.phase*cmath.pi/180)
 
                     # for i in range(len(circuitNodes)+len(circuitComponents[IVS])):
@@ -299,17 +301,16 @@ if __name__ == "__main__":
 
                     try:
                         x = np.linalg.solve(matrixM, matrixB)
-                    except:
-                        print("Circuit cannot be solved! Please check if you have provided the correct circuit definition")
 
-                    currents = []
+                        circuitCurrents = []
+                        # Data for printing clear data as output
+                        for v in circuitComponents[IVS]:
+                            circuitCurrents.append("I in "+v.name)
 
-                    # Data for printing clear data as output
-                    for v in circuitComponents[IVS]:
-                        currents.append("I in "+v.name)
-
-                    # Printing data output
-                    print(pd.DataFrame(x, columns=['Value'], index=circuitNodes+currents))
+                        # Printing data output
+                        print(pd.DataFrame(x, columns=['Value'], index=circuitNodes+circuitCurrents))
+                    except np.linalg.LinAlgError:
+                        print("Singular Matrix Formed! Please check if you have entered the circuit definition correctly!")
 
                 except ValueError:
                     sys.exit("Netlist does not abide to given format!")
