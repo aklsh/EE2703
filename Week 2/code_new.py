@@ -193,13 +193,6 @@ if __name__ == "__main__":
                     matrixB = np.zeros((len(circuitNodes)+len(circuitComponents[IVS]),), np.complex)
                     # GND Equation
                     matrixM[0][0] = 1.0
-                    numNodes = len(circuitNodes)
-                    # Equations for source voltages
-                    for i in range(len(circuitComponents[IVS])):
-                        source = circuitComponents[IVS][i]
-                        matrixM[numNodes+i][nodeNumbers[source.node1]] = -1.0
-                        matrixM[numNodes+i][nodeNumbers[source.node2]] = 1.0
-                        matrixB[numNodes+i] = cmath.rect(source.value, source.phase*PI/180)
                     # Resistor Equations
                     for r in circuitComponents[RESISTOR]:
                         if r.node1 != 'GND':
@@ -224,6 +217,13 @@ if __name__ == "__main__":
                         if l.node2 != 'GND':
                             matrixM[nodeNumbers[l.node2]][nodeNumbers[l.node1]] -= complex(0, -1.0/(2*PI*circuitFreq*l.value))
                             matrixM[nodeNumbers[l.node2]][nodeNumbers[l.node2]] += complex(0, -1.0/(2*PI*circuitFreq*l.value))
+                    numNodes = len(circuitNodes)
+                    # Equations for source voltages
+                    for i in range(len(circuitComponents[IVS])):
+                        source = circuitComponents[IVS][i]
+                        matrixM[numNodes+i][nodeNumbers[source.node1]] = -1.0
+                        matrixM[numNodes+i][nodeNumbers[source.node2]] = 1.0
+                        matrixB[numNodes+i] = cmath.rect(source.value, source.phase*PI/180)
                     # Voltage Source Equations
                     for vol in circuitComponents[IVS]:
                         if(vol.node1 != 'GND'):
@@ -236,6 +236,22 @@ if __name__ == "__main__":
                             matrixB[nodeNumbers[source.node1]] += cmath.rect(source.value, source.phase*cmath.pi/180)
                         if(source.node2 != 'GND'):
                             matrixB[nodeNumbers[source.node2]] -= cmath.rect(source.value, source.phase*cmath.pi/180)
+                    # VCVS Equations
+                    for vcvs in circuitComponents[VCVS]:
+                        if (vcvs.node1 != 'GND'):
+                            matrixM[nodeNumbers[vcvs.node1]][nodeNumbers[vcvs.node3]] += vcvs.value
+                            matrixM[nodeNumbers[vcvs.node1]][nodeNumbers[vcvs.node4]] -= vcvs.value
+                        if (vcvs.node2 != 'GND'):
+                            matrixM[nodeNumbers[vcvs.node2]][nodeNumbers[vcvs.node3]] -= vcvs.value
+                            matrixM[nodeNumbers[vcvs.node2]][nodeNumbers[vcvs.node4]] += vcvs.value
+                    # VCCS Equations
+                    for vccs in circuitComponents[VCCS]:
+                        if(vccs.node1 != 'GND'):
+                            matrixM[nodeNumbers[vccs.node1]][nodeNumbers[vccs.node3]] += vccs.value
+                            matrixM[nodeNumbers[vccs.node1]][nodeNumbers[vccs.node4]] -= vccs.value
+                        if(vccs.node2 != 'GND'):
+                            matrixM[nodeNumbers[vccs.node2]][nodeNumbers[vccs.node3]] -= vccs.value
+                            matrixM[nodeNumbers[vccs.node2]][nodeNumbers[vccs.node4]] += vccs.value
                     try:
                         x = np.linalg.solve(matrixM, matrixB)
                         circuitCurrents = []
