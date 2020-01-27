@@ -189,8 +189,10 @@ if __name__ == "__main__":
                     except:
                         sys.exit("No ground node specified in the circuit!!")
                     nodeNumbers = {circuitNodes[i]:i for i in range(len(circuitNodes))}
-                    matrixM = np.zeros((len(circuitNodes)+len(circuitComponents[IVS]), len(circuitNodes)+len(circuitComponents[IVS])), np.complex)
-                    matrixB = np.zeros((len(circuitNodes)+len(circuitComponents[IVS]),), np.complex)
+                    numNodes = len(circuitNodes)
+                    numVS = len(circuitComponents[IVS])+len(circuitComponents[VCVS])+len(circuitComponents[CCVS])
+                    matrixM = np.zeros((numNodes+numVS, numNodes+numVS), np.complex)
+                    matrixB = np.zeros((numNodes+numVS,), np.complex)
                     # GND Equation
                     matrixM[0][0] = 1.0
                     # Resistor Equations
@@ -217,46 +219,59 @@ if __name__ == "__main__":
                         if l.node2 != 'GND':
                             matrixM[nodeNumbers[l.node2]][nodeNumbers[l.node1]] -= complex(0, -1.0/(2*PI*circuitFreq*l.value))
                             matrixM[nodeNumbers[l.node2]][nodeNumbers[l.node2]] += complex(0, -1.0/(2*PI*circuitFreq*l.value))
-                    numNodes = len(circuitNodes)
-                    # Equations for source voltages
-                    for i in range(len(circuitComponents[IVS])):
-                        source = circuitComponents[IVS][i]
-                        matrixM[numNodes+i][nodeNumbers[source.node1]] = -1.0
-                        matrixM[numNodes+i][nodeNumbers[source.node2]] = 1.0
-                        matrixB[numNodes+i] = cmath.rect(source.value, source.phase*PI/180)
                     # Voltage Source Equations
-                    for vol in circuitComponents[IVS]:
-                        if(vol.node1 != 'GND'):
-                            matrixM[nodeNumbers[vol.node1]][numNodes] = -1.0
-                        if(vol.node2 != 'GND'):
-                            matrixM[nodeNumbers[vol.node2]][numNodes] = 1.0
-                    # Current source equations
-                    for source in circuitComponents[ICS]:
-                        if(source.node1 != 'GND'):
-                            matrixB[nodeNumbers[source.node1]] += cmath.rect(source.value, source.phase*cmath.pi/180)
-                        if(source.node2 != 'GND'):
-                            matrixB[nodeNumbers[source.node2]] -= cmath.rect(source.value, source.phase*cmath.pi/180)
+                    for i in range(len(circuitComponents[IVS])):
+                        if circuitComponents[IVS][i].node1 != 'GND':
+                            matrixM[nodeNumbers[circuitComponents[IVS][i].node1]][numNodes+i] = 1.0
+                        if circuitComponents[IVS][i].node2 != 'GND':
+                            matrixM[nodeNumbers[circuitComponents[IVS][i].node2]][numNodes+i] = -1.0
+                        matrixM[numNodes+i][nodeNumbers[circuitComponents[IVS][i].node1]] = 1.0
+                        matrixM[numNodes+i][nodeNumbers[circuitComponents[IVS][i].node2]] = -1.0
+                        matrixB[numNodes+i] = cmath.rect(circuitComponents[IVS][i].value, circuitComponents[IVS][i].phase*PI/180)
+                    # Current Source Equations
+                    for i in circuitComponents[ICS]:
+                        if i.node1 != 'GND':
+                            matrixB[nodeNumbers[i.node1]] = i.value
+                        if i.node2 != 'GND':
+                            matrixB[nodeNumbers[i.node2]] = -1*i.value
                     # VCVS Equations
-                    for vcvs in circuitComponents[VCVS]:
-                        if (vcvs.node1 != 'GND'):
-                            matrixM[nodeNumbers[vcvs.node1]][nodeNumbers[vcvs.node3]] += vcvs.value
-                            matrixM[nodeNumbers[vcvs.node1]][nodeNumbers[vcvs.node4]] -= vcvs.value
-                        if (vcvs.node2 != 'GND'):
-                            matrixM[nodeNumbers[vcvs.node2]][nodeNumbers[vcvs.node3]] -= vcvs.value
-                            matrixM[nodeNumbers[vcvs.node2]][nodeNumbers[vcvs.node4]] += vcvs.value
+                    for i in range(len(circuitComponents[VCVS])):
+                        if circuitComponents[VCVS][i].node1 != 'GND':
+                            matrixM[nodeNumbers[circuitComponents[VCVS][i].node1]][numNodes+len(circuitComponents[IVS])+i] = 1.0
+                        if circuitComponents[VCVS][i].node2 != 'GND':
+                            matrixM[nodeNumbers[circuitComponents[VCVS][i].node2]][numNodes+len(circuitComponents[IVS])+i] = -1.0
+                        matrixM[numNodes+len(circuitComponents[IVS])+i][nodeNumbers[circuitComponents[VCVS][i].node1]] = 1.0
+                        matrixM[numNodes+len(circuitComponents[IVS])+i][nodeNumbers[circuitComponents[VCVS][i].node2]] = -1.0
+                        matrixM[numNodes+len(circuitComponents[IVS])+i][nodeNumbers[circuitComponents[VCVS][i].node3]] = -1.0*circuitComponents[VCVS][i].value
+                        matrixM[numNodes+len(circuitComponents[IVS])+i][nodeNumbers[circuitComponents[VCVS][i].node4]] = 1.0*circuitComponents[VCVS][i].value
+                    # CCVS Equations
+                    for i in range(len(circuitComponents[CCVS])):
+                        if circuitComponents[VCVS][i].node1 != 'GND':
+                            matrixM[nodeNumbers[circuitComponents[CCVS][i].node1]][numNodes+len(circuitComponents[IVS])+len(circuitComponents[VCVS])+i] = 1.0
+                        if circuitComponents[VCVS][i].node2 != 'GND':
+                            matrixM[nodeNumbers[circuitComponents[VCVS][i].node2]][numNodes+len(circuitComponents[IVS])+len(circuitComponents[VCVS])+i] = -1.0
+                        matrixM[numNodes+len(circuitComponents[IVS])+len(circuitComponents[VCVS])+i][nodeNumbers[circuitComponents[CCVS][i].node1]] = 1.0
+                        matrixM[numNodes+len(circuitComponents[IVS])+len(circuitComponents[VCVS])+i][nodeNumbers[circuitComponents[CCVS][i].node2]] = -1.0
+                        matrixM[numNodes+len(circuitComponents[IVS])+len(circuitComponents[VCVS])+i][numNodes+len(circuitComponents[IVS])+len(circuitComponents[VCVS])+i] = -1.0*circuitComponents[CCVS][i].value
                     # VCCS Equations
                     for vccs in circuitComponents[VCCS]:
-                        if(vccs.node1 != 'GND'):
-                            matrixM[nodeNumbers[vccs.node1]][nodeNumbers[vccs.node3]] += vccs.value
-                            matrixM[nodeNumbers[vccs.node1]][nodeNumbers[vccs.node4]] -= vccs.value
-                        if(vccs.node2 != 'GND'):
-                            matrixM[nodeNumbers[vccs.node2]][nodeNumbers[vccs.node3]] -= vccs.value
-                            matrixM[nodeNumbers[vccs.node2]][nodeNumbers[vccs.node4]] += vccs.value
+                        matrixM[nodeNumbers[vccs.node1]][nodeNumbers[vccs.node4]]+=vccs.value
+                        matrixM[nodeNumbers[vccs.node1]][nodeNumbers[vccs.node3]]-=vccs.value
+                        matrixM[nodeNumbers[vccs.node2]][nodeNumbers[vccs.node4]]-=vccs.value
+                        matrixM[nodeNumbers[vccs.node3]][nodeNumbers[vccs.node3]]+=vccs.value
+                    # CCCS Equations
+                    for cccs in circuitComponents[CCCS]:
+                        matrixM[nodeNumbers[cccs.node1]][numNodes+circuitComponents[IVS].index(cccs.vSource)]-=cccs.value
+                        matrixM[nodeNumbers[cccs.node2]][numNodes+circuitComponents[IVS].index(cccs.vSource)]+=cccs.value
                     try:
                         x = np.linalg.solve(matrixM, matrixB)
                         circuitCurrents = []
                         # Data for printing clear data as output
                         for v in circuitComponents[IVS]:
+                            circuitCurrents.append("current in "+v.name)
+                        for v in circuitComponents[VCVS]:
+                            circuitCurrents.append("current in "+v.name)
+                        for v in circuitComponents[CCVS]:
                             circuitCurrents.append("current in "+v.name)
                         # Printing data output
                         print(pd.DataFrame(x, columns=['Value'], index=circuitNodes+circuitCurrents))
