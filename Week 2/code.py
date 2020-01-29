@@ -32,21 +32,21 @@ PI = np.pi
 class resistor:
     def __init__(self, name, n1, n2, val):
         self.name = name
-        self.value = float(val)
+        self.value = enggToMath(val)
         self.node1 = n1
         self.node2 = n2
 
 class inductor:
     def __init__(self, name, n1, n2, val):
         self.name = name
-        self.value = float(val)
+        self.value = enggToMath(val)
         self.node1 = n1
         self.node2 = n2
 
 class capacitor:
     def __init__(self, name, n1, n2, val):
         self.name = name
-        self.value = float(val)
+        self.value = enggToMath(val)
         self.node1 = n1
         self.node2 = n2
 
@@ -105,12 +105,24 @@ def enggToMath(enggNumber):
     lenEnggNumber = len(enggNumber)
     if enggNumber[lenEnggNumber-1] == 'k':
         base = int(enggNumber[0:lenEnggNumber-1])
-        return base*1000
+        return base*1e3
     elif enggNumber[lenEnggNumber-1] == 'm':
         base = int(enggNumber[0:lenEnggNumber-1])
-        return base*0.001
+        return base*1e-3
+    elif enggNumber[lenEnggNumber-1] == 'u':
+        base = int(enggNumber[0:lenEnggNumber-1])
+        return base*1e-6
+    elif enggNumber[lenEnggNumber-1] == 'n':
+        base = int(enggNumber[0:lenEnggNumber-1])
+        return base*1e-9
+    elif enggNumber[lenEnggNumber-1] == 'M':
+        base = int(enggNumber[0:lenEnggNumber-1])
+        return base*1e6
     else:
-        return float(enggNumber)
+        try:
+            return float(enggNumber)
+        except:
+            sys.exit("Please check the component values given. Supported engineer units are: M, k, m, u, n")
 
 if __name__ == "__main__":
     # checking number of command line arguments
@@ -161,12 +173,16 @@ if __name__ == "__main__":
                             if len(lineTokens) == 5: # DC Source
                                 circuitComponents[IVS].append(voltageSource(lineTokens[0], lineTokens[1], lineTokens[2], float(lineTokens[4])))
                             elif len(lineTokens) == 6: # AC Source
+                                if circuitFreq == 1e-100:
+                                    sys.exit("Frequency of AC Source not specified!!")
                                 circuitComponents[IVS].append(voltageSource(lineTokens[0], lineTokens[1], lineTokens[2], float(lineTokens[4])/(2*math.sqrt(2)), lineTokens[5]))
                         # Current Source
                         elif lineTokens[0][0] == ICS:
                             if len(lineTokens) == 5: # DC Source
                                 circuitComponents[ICS].append(currentSource(lineTokens[0], lineTokens[1], lineTokens[2], float(lineTokens[4])))
                             elif len(lineTokens) == 6: # AC Source
+                                if circuitFreq == 1e-100:
+                                    sys.exit("Frequency of AC Source not specified!!")
                                 circuitComponents[ICS].append(currentSource(lineTokens[0], lineTokens[1], lineTokens[2], float(lineTokens[4])/(2*math.sqrt(2)), lineTokens[5]))
                         # VCVS
                         elif lineTokens[0][0] == VCVS:
