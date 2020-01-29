@@ -122,7 +122,7 @@ def enggToMath(enggNumber):
         try:
             return float(enggNumber)
         except:
-            sys.exit("Please check the component values given. Supported engineer units are: M, k, m, u, n\nYou can also enter values in 'x'e'y' format (exponential format).")
+            sys.exit("Please check the component values given. Supported engineer units are: M, k, m, u, n\nYou can also enter values in exponential format (eg. 1e3 = 1000).")
 
 if __name__ == "__main__":
     # checking number of command line arguments
