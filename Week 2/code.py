@@ -122,7 +122,7 @@ def enggToMath(enggNumber):
         try:
             return float(enggNumber)
         except:
-            sys.exit("Please check the component values given. Supported engineer units are: M, k, m, u, n")
+            sys.exit("Please check the component values given. Supported engineer units are: M, k, m, u, n\nYou can also enter values in 'x'e'y' format (exponential format).")
 
 if __name__ == "__main__":
     # checking number of command line arguments
@@ -175,7 +175,7 @@ if __name__ == "__main__":
                             elif len(lineTokens) == 6: # AC Source
                                 if circuitFreq == 1e-100:
                                     sys.exit("Frequency of AC Source not specified!!")
-                                circuitComponents[IVS].append(voltageSource(lineTokens[0], lineTokens[1], lineTokens[2], float(lineTokens[4])/(2*math.sqrt(2)), lineTokens[5]))
+                                circuitComponents[IVS].append(voltageSource(lineTokens[0], lineTokens[1], lineTokens[2], float(lineTokens[4])/2, lineTokens[5]))
                         # Current Source
                         elif lineTokens[0][0] == ICS:
                             if len(lineTokens) == 5: # DC Source
@@ -183,7 +183,7 @@ if __name__ == "__main__":
                             elif len(lineTokens) == 6: # AC Source
                                 if circuitFreq == 1e-100:
                                     sys.exit("Frequency of AC Source not specified!!")
-                                circuitComponents[ICS].append(currentSource(lineTokens[0], lineTokens[1], lineTokens[2], float(lineTokens[4])/(2*math.sqrt(2)), lineTokens[5]))
+                                circuitComponents[ICS].append(currentSource(lineTokens[0], lineTokens[1], lineTokens[2], float(lineTokens[4])/2, lineTokens[5]))
                         # VCVS
                         elif lineTokens[0][0] == VCVS:
                             circuitComponents[VCVS].append(vcvs(lineTokens[0], lineTokens[1], lineTokens[2], lineTokens[3], lineTokens[4], lineTokens[5]))
@@ -241,15 +241,15 @@ if __name__ == "__main__":
                             matrixM[nodeNumbers[circuitComponents[IVS][i].node1]][numNodes+i] = 1.0
                         if circuitComponents[IVS][i].node2 != 'GND':
                             matrixM[nodeNumbers[circuitComponents[IVS][i].node2]][numNodes+i] = -1.0
-                        matrixM[numNodes+i][nodeNumbers[circuitComponents[IVS][i].node1]] = 1.0
-                        matrixM[numNodes+i][nodeNumbers[circuitComponents[IVS][i].node2]] = -1.0
+                        matrixM[numNodes+i][nodeNumbers[circuitComponents[IVS][i].node1]] = -1.0
+                        matrixM[numNodes+i][nodeNumbers[circuitComponents[IVS][i].node2]] = +1.0
                         matrixB[numNodes+i] = cmath.rect(circuitComponents[IVS][i].value, circuitComponents[IVS][i].phase*PI/180)
                     # Current Source Equations
                     for i in circuitComponents[ICS]:
                         if i.node1 != 'GND':
-                            matrixB[nodeNumbers[i.node1]] = i.value
+                            matrixB[nodeNumbers[i.node1]] = -1*i.value
                         if i.node2 != 'GND':
-                            matrixB[nodeNumbers[i.node2]] = -1*i.value
+                            matrixB[nodeNumbers[i.node2]] = i.value
                     # VCVS Equations
                     for i in range(len(circuitComponents[VCVS])):
                         if circuitComponents[VCVS][i].node1 != 'GND':
@@ -289,8 +289,8 @@ if __name__ == "__main__":
                             circuitCurrents.append("current in "+v.name)
                         for v in circuitComponents[CCVS]:
                             circuitCurrents.append("current in "+v.name)
-                        # Printing data output
-                        print(pd.DataFrame(x, columns=['Value'], index=circuitNodes+circuitCurrents))
+                        # Printing data output in table format
+                        print(pd.DataFrame(x, circuitNodes+circuitCurrents, columns=['Voltage / Current']))
                     except np.linalg.LinAlgError:
                         sys.exit("Singular Matrix Formed! Please check if you have entered the circuit definition correctly!")
                     print("Convention for sign of current: +ve if current enters the +ve terminal/leaves the -ve terminal")

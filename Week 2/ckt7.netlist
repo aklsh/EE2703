@@ -1,0 +1,5 @@
+.circuit
+V1 GND n1 ac 5 0
+L1 GND n1 1
+.end
+.ac V1 1e3
