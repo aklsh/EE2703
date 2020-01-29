@@ -9,6 +9,7 @@
 
 # importing necessary libraries
 import sys
+import os
 import math
 import cmath
 import numpy as np
@@ -290,10 +291,10 @@ if __name__ == "__main__":
                         for v in circuitComponents[CCVS]:
                             circuitCurrents.append("current in "+v.name)
                         # Printing data output in table format
+                        os.system('clear')
                         print(pd.DataFrame(x, circuitNodes+circuitCurrents, columns=['Voltage / Current']))
                     except np.linalg.LinAlgError:
                         sys.exit("Singular Matrix Formed! Please check if you have entered the circuit definition correctly!")
-                    print("Convention for sign of current: +ve if current enters the +ve terminal/leaves the -ve terminal")
                 except ValueError:
                     sys.exit("Netlist does not abide to given format!")
         except FileNotFoundError:
