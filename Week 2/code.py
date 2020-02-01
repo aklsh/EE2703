@@ -281,9 +281,17 @@ if __name__ == "__main__":
                     # CCCS Equations
                     for cccs in circuitComponents[CCCS]:
                         if cccs.node1 != 'GND':
-                            matrixM[nodeNumbers[cccs.node1]][numNodes+circuitComponents[IVS].index(cccs.vSource)]-=cccs.value
+                            def getIndexIVS(vName):
+                                for i in range(len(circuitComponents[IVS])):
+                                    if circuitComponents[IVS][i].name == vName:
+                                        return i
+                            matrixM[nodeNumbers[cccs.node1]][numNodes+getIndexIVS(cccs.vSource)]-=cccs.value
                         if cccs.node2 != 'GND':
-                            matrixM[nodeNumbers[cccs.node2]][numNodes+circuitComponents[IVS].index(cccs.vSource)]+=cccs.value
+                            def getIndexIVS(vName):
+                                for i in range(len(circuitComponents[IVS])):
+                                    if circuitComponents[IVS][i].name == vName:
+                                        return i
+                            matrixM[nodeNumbers[cccs.node2]][numNodes+getIndexIVS(cccs.vSource)]+=cccs.value
                     try:
                         x = np.linalg.solve(matrixM, matrixB)
                         circuitCurrents = []
@@ -298,7 +306,7 @@ if __name__ == "__main__":
                         print(pd.DataFrame(x, circuitNodes+circuitCurrents, columns=['Voltage / Current']))
                     except np.linalg.LinAlgError:
                         sys.exit("Singular Matrix Formed! Please check if you have entered the circuit definition correctly!")
-                except ValueError:
+                except ValueError:                    
                     sys.exit("Netlist does not abide to given format!")
         except FileNotFoundError:
             sys.exit("Given file does not exist!")
