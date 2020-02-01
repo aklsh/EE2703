@@ -272,14 +272,18 @@ if __name__ == "__main__":
                         matrixM[numNodes+len(circuitComponents[IVS])+len(circuitComponents[VCVS])+i][numNodes+len(circuitComponents[IVS])+len(circuitComponents[VCVS])+i] = -1.0*circuitComponents[CCVS][i].value
                     # VCCS Equations
                     for vccs in circuitComponents[VCCS]:
-                        matrixM[nodeNumbers[vccs.node1]][nodeNumbers[vccs.node4]]+=vccs.value
-                        matrixM[nodeNumbers[vccs.node1]][nodeNumbers[vccs.node3]]-=vccs.value
-                        matrixM[nodeNumbers[vccs.node2]][nodeNumbers[vccs.node4]]-=vccs.value
-                        matrixM[nodeNumbers[vccs.node3]][nodeNumbers[vccs.node3]]+=vccs.value
+                        if vccs.node1 != 'GND':
+                            matrixM[nodeNumbers[vccs.node1]][nodeNumbers[vccs.node4]]+=vccs.value
+                            matrixM[nodeNumbers[vccs.node1]][nodeNumbers[vccs.node3]]-=vccs.value
+                        if vccs.node2 != 'GND':
+                            matrixM[nodeNumbers[vccs.node2]][nodeNumbers[vccs.node4]]-=vccs.value
+                            matrixM[nodeNumbers[vccs.node3]][nodeNumbers[vccs.node3]]+=vccs.value
                     # CCCS Equations
                     for cccs in circuitComponents[CCCS]:
-                        matrixM[nodeNumbers[cccs.node1]][numNodes+circuitComponents[IVS].index(cccs.vSource)]-=cccs.value
-                        matrixM[nodeNumbers[cccs.node2]][numNodes+circuitComponents[IVS].index(cccs.vSource)]+=cccs.value
+                        if cccs.node1 != 'GND':
+                            matrixM[nodeNumbers[cccs.node1]][numNodes+circuitComponents[IVS].index(cccs.vSource)]-=cccs.value
+                        if cccs.node2 != 'GND':
+                            matrixM[nodeNumbers[cccs.node2]][numNodes+circuitComponents[IVS].index(cccs.vSource)]+=cccs.value
                     try:
                         x = np.linalg.solve(matrixM, matrixB)
                         circuitCurrents = []
