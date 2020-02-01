@@ -291,7 +291,6 @@ if __name__ == "__main__":
                         for v in circuitComponents[CCVS]:
                             circuitCurrents.append("current in "+v.name)
                         # Printing data output in table format
-                        os.system('clear')
                         print(pd.DataFrame(x, circuitNodes+circuitCurrents, columns=['Voltage / Current']))
                     except np.linalg.LinAlgError:
                         sys.exit("Singular Matrix Formed! Please check if you have entered the circuit definition correctly!")
