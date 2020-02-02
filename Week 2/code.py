@@ -54,7 +54,7 @@ class capacitor:
 class voltageSource:
     def __init__(self, name, n1, n2, val, phase=0):
         self.name = name
-        self.value = float(val)
+        self.value = enggToMath(val)
         self.node1 = n1
         self.node2 = n2
         self.phase = float(phase)
@@ -62,7 +62,7 @@ class voltageSource:
 class currentSource:
     def __init__(self, name, n1, n2, val, phase=0):
         self.name = name
-        self.value = float(val)
+        self.value = enggToMath(val)
         self.node1 = n1
         self.node2 = n2
         self.phase = float(phase)
@@ -70,7 +70,7 @@ class currentSource:
 class vcvs:
     def __init__(self, name, n1, n2, n3, n4, val):
         self.name = name
-        self.value = float(val)
+        self.value = enggToMath(val)
         self.node1 = n1
         self.node2 = n2
         self.node3 = n3
@@ -79,7 +79,7 @@ class vcvs:
 class vccs:
     def __init__(self, name, n1, n2, n3, n4, val):
         self.name = name
-        self.value = float(val)
+        self.value = enggToMath(val)
         self.node1 = n1
         self.node2 = n2
         self.node3 = n3
@@ -88,7 +88,7 @@ class vccs:
 class ccvs:
     def __init__(self, name, n1, n2, vName, val):
         self.name = name
-        self.value = float(val)
+        self.value = enggToMath(val)
         self.node1 = n1
         self.node2 = n2
         self.vSource = vName
@@ -96,33 +96,33 @@ class ccvs:
 class cccs:
     def __init__(self, name, n1, n2, vName, val):
         self.name = name
-        self.value = float(val)
+        self.value = enggToMath(val)
         self.node1 = n1
         self.node2 = n2
         self.vSource = vName
 
 # Convert a number in engineer's format to math
 def enggToMath(enggNumber):
-    lenEnggNumber = len(enggNumber)
-    if enggNumber[lenEnggNumber-1] == 'k':
-        base = int(enggNumber[0:lenEnggNumber-1])
-        return base*1e3
-    elif enggNumber[lenEnggNumber-1] == 'm':
-        base = int(enggNumber[0:lenEnggNumber-1])
-        return base*1e-3
-    elif enggNumber[lenEnggNumber-1] == 'u':
-        base = int(enggNumber[0:lenEnggNumber-1])
-        return base*1e-6
-    elif enggNumber[lenEnggNumber-1] == 'n':
-        base = int(enggNumber[0:lenEnggNumber-1])
-        return base*1e-9
-    elif enggNumber[lenEnggNumber-1] == 'M':
-        base = int(enggNumber[0:lenEnggNumber-1])
-        return base*1e6
-    else:
-        try:
-            return float(enggNumber)
-        except:
+    try:
+        return float(enggNumber)
+    except:
+        lenEnggNumber = len(enggNumber)
+        if enggNumber[lenEnggNumber-1] == 'k':
+            base = int(enggNumber[0:lenEnggNumber-1])
+            return base*1e3
+        elif enggNumber[lenEnggNumber-1] == 'm':
+            base = int(enggNumber[0:lenEnggNumber-1])
+            return base*1e-3
+        elif enggNumber[lenEnggNumber-1] == 'u':
+            base = int(enggNumber[0:lenEnggNumber-1])
+            return base*1e-6
+        elif enggNumber[lenEnggNumber-1] == 'n':
+            base = int(enggNumber[0:lenEnggNumber-1])
+            return base*1e-9
+        elif enggNumber[lenEnggNumber-1] == 'M':
+            base = int(enggNumber[0:lenEnggNumber-1])
+            return base*1e6
+        else:
             sys.exit("Please check the component values given. Supported engineer units are: M, k, m, u, n\nYou can also enter values in exponential format (eg. 1e3 = 1000).")
 
 if __name__ == "__main__":
@@ -281,17 +281,13 @@ if __name__ == "__main__":
                             matrixM[nodeNumbers[vccs.node3]][nodeNumbers[vccs.node3]]+=vccs.value
                     # CCCS Equations
                     for cccs in circuitComponents[CCCS]:
+                        def getIndexIVS(vName):
+                            for i in range(len(circuitComponents[IVS])):
+                                if circuitComponents[IVS][i].name == vName:
+                                    return i
                         if cccs.node1 != 'GND':
-                            def getIndexIVS(vName):
-                                for i in range(len(circuitComponents[IVS])):
-                                    if circuitComponents[IVS][i].name == vName:
-                                        return i
                             matrixM[nodeNumbers[cccs.node1]][numNodes+getIndexIVS(cccs.vSource)]-=cccs.value
                         if cccs.node2 != 'GND':
-                            def getIndexIVS(vName):
-                                for i in range(len(circuitComponents[IVS])):
-                                    if circuitComponents[IVS][i].name == vName:
-                                        return i
                             matrixM[nodeNumbers[cccs.node2]][numNodes+getIndexIVS(cccs.vSource)]+=cccs.value
                     try:
                         x = np.linalg.solve(matrixM, matrixB)
