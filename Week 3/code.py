@@ -61,7 +61,6 @@ jColumn = sp.jn(2,t)
 M = c_[jColumn, t]
 p = array([A, B])
 actual = c_[t,trueFunction]
-print('Question 6 - The 2 vectors are equal') if((M@p == trueFunction).all()) else print('Questio 6 - The 2 vectors are not equal')
 
 # QUESTION: 7
 A = arange(0,2,0.1)
