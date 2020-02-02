@@ -146,6 +146,7 @@ if __name__ == "__main__":
                         # Getting frequency, if any
                         if(line[:3] == '.ac'):
                             circuitFreq = float(line.split()[2])
+                            w = 2*PI*circuitFreq
                 try:
                     # Finding the location of the identifiers
                     identifier1 = netlistFileLines.index(CIRCUIT_START)
@@ -223,19 +224,19 @@ if __name__ == "__main__":
                     # Capacitor Equations
                     for c in circuitComponents[CAPACITOR]:
                         if c.node1 != 'GND':
-                            matrixM[nodeNumbers[c.node1]][nodeNumbers[c.node1]] += complex(0, 2*PI*circuitFreq*c.value)
-                            matrixM[nodeNumbers[c.node1]][nodeNumbers[c.node2]] -= complex(0, 2*PI*circuitFreq*c.value)
+                            matrixM[nodeNumbers[c.node1]][nodeNumbers[c.node1]] += complex(0, w*c.value)
+                            matrixM[nodeNumbers[c.node1]][nodeNumbers[c.node2]] -= complex(0, w*c.value)
                         if c.node2 != 'GND':
-                            matrixM[nodeNumbers[c.node2]][nodeNumbers[c.node1]] -= complex(0, 2*PI*circuitFreq*c.value)
-                            matrixM[nodeNumbers[c.node2]][nodeNumbers[c.node2]] += complex(0, 2*PI*circuitFreq*c.value)
+                            matrixM[nodeNumbers[c.node2]][nodeNumbers[c.node1]] -= complex(0, w*c.value)
+                            matrixM[nodeNumbers[c.node2]][nodeNumbers[c.node2]] += complex(0, w*c.value)
                     # Inductor Equations
                     for l in circuitComponents[INDUCTOR]:
                         if l.node1 != 'GND':
-                            matrixM[nodeNumbers[l.node1]][nodeNumbers[l.node1]] += complex(0, -1.0/(2*PI*circuitFreq*l.value))
-                            matrixM[nodeNumbers[l.node1]][nodeNumbers[l.node2]] -= complex(0, -1.0/(2*PI*circuitFreq*l.value))
+                            matrixM[nodeNumbers[l.node1]][nodeNumbers[l.node1]] += complex(0, -1.0/(w*l.value))
+                            matrixM[nodeNumbers[l.node1]][nodeNumbers[l.node2]] -= complex(0, -1.0/(w*l.value))
                         if l.node2 != 'GND':
-                            matrixM[nodeNumbers[l.node2]][nodeNumbers[l.node1]] -= complex(0, -1.0/(2*PI*circuitFreq*l.value))
-                            matrixM[nodeNumbers[l.node2]][nodeNumbers[l.node2]] += complex(0, -1.0/(2*PI*circuitFreq*l.value))
+                            matrixM[nodeNumbers[l.node2]][nodeNumbers[l.node1]] -= complex(0, -1.0/(w*l.value))
+                            matrixM[nodeNumbers[l.node2]][nodeNumbers[l.node2]] += complex(0, -1.0/(w*l.value))
                     # Voltage Source Equations
                     for i in range(len(circuitComponents[IVS])):
                         if circuitComponents[IVS][i].node1 != 'GND':
@@ -306,7 +307,7 @@ if __name__ == "__main__":
                         print(pd.DataFrame(x, circuitNodes+circuitCurrents, columns=['Voltage / Current']))
                     except np.linalg.LinAlgError:
                         sys.exit("Singular Matrix Formed! Please check if you have entered the circuit definition correctly!")
-                except ValueError:                    
+                except ValueError:
                     sys.exit("Netlist does not abide to given format!")
         except FileNotFoundError:
             sys.exit("Given file does not exist!")
