@@ -107,18 +107,23 @@ def enggToMath(enggNumber):
         return float(enggNumber)
     except:
         lenEnggNumber = len(enggNumber)
+        # Kilo
         if enggNumber[lenEnggNumber-1] == 'k':
             base = int(enggNumber[0:lenEnggNumber-1])
             return base*1e3
+        # Milli
         elif enggNumber[lenEnggNumber-1] == 'm':
             base = int(enggNumber[0:lenEnggNumber-1])
             return base*1e-3
+        # Micro
         elif enggNumber[lenEnggNumber-1] == 'u':
             base = int(enggNumber[0:lenEnggNumber-1])
             return base*1e-6
+        # Nano
         elif enggNumber[lenEnggNumber-1] == 'n':
             base = int(enggNumber[0:lenEnggNumber-1])
             return base*1e-9
+        # Mega
         elif enggNumber[lenEnggNumber-1] == 'M':
             base = int(enggNumber[0:lenEnggNumber-1])
             return base*1e6
@@ -146,6 +151,7 @@ if __name__ == "__main__":
                         # Getting frequency, if any
                         if(line[:3] == '.ac'):
                             circuitFreq = float(line.split()[2])
+                            # Setting Angular Frequency w
                             w = 2*PI*circuitFreq
                 try:
                     # Finding the location of the identifiers
@@ -153,7 +159,9 @@ if __name__ == "__main__":
                     identifier2 = netlistFileLines.index(CIRCUIT_END)
                     circuitBody = netlistFileLines[identifier1+1:identifier2]
                     for line in circuitBody:
+                        # Extracting the data from the line
                         lineTokens = line.split()
+                        # Appending new nodes to a list
                         try:
                             if lineTokens[1] not in circuitNodes:
                                 circuitNodes.append(lineTokens[1])
@@ -206,9 +214,11 @@ if __name__ == "__main__":
                         circuitNodes = ['GND'] + circuitNodes
                     except:
                         sys.exit("No ground node specified in the circuit!!")
+                    # Creating a dictionary with node names and their numbers (to reduce the time taken by later parts of the program)
                     nodeNumbers = {circuitNodes[i]:i for i in range(len(circuitNodes))}
                     numNodes = len(circuitNodes)
                     numVS = len(circuitComponents[IVS])+len(circuitComponents[VCVS])+len(circuitComponents[CCVS])
+                    # Creating Matrices M and b
                     matrixM = np.zeros((numNodes+numVS, numNodes+numVS), np.complex)
                     matrixB = np.zeros((numNodes+numVS,), np.complex)
                     # GND Equation
@@ -239,10 +249,12 @@ if __name__ == "__main__":
                             matrixM[nodeNumbers[l.node2]][nodeNumbers[l.node2]] += complex(0, -1.0/(w*l.value))
                     # Voltage Source Equations
                     for i in range(len(circuitComponents[IVS])):
+                        # Equation accounting for current through the source
                         if circuitComponents[IVS][i].node1 != 'GND':
                             matrixM[nodeNumbers[circuitComponents[IVS][i].node1]][numNodes+i] = 1.0
                         if circuitComponents[IVS][i].node2 != 'GND':
                             matrixM[nodeNumbers[circuitComponents[IVS][i].node2]][numNodes+i] = -1.0
+                        # Auxiliary Equations
                         matrixM[numNodes+i][nodeNumbers[circuitComponents[IVS][i].node1]] = -1.0
                         matrixM[numNodes+i][nodeNumbers[circuitComponents[IVS][i].node2]] = +1.0
                         matrixB[numNodes+i] = cmath.rect(circuitComponents[IVS][i].value, circuitComponents[IVS][i].phase*PI/180)
@@ -254,6 +266,7 @@ if __name__ == "__main__":
                             matrixB[nodeNumbers[i.node2]] = i.value
                     # VCVS Equations
                     for i in range(len(circuitComponents[VCVS])):
+                        # Equation accounting for current through the source
                         if circuitComponents[VCVS][i].node1 != 'GND':
                             matrixM[nodeNumbers[circuitComponents[VCVS][i].node1]][numNodes+len(circuitComponents[IVS])+i] = 1.0
                         if circuitComponents[VCVS][i].node2 != 'GND':
@@ -264,6 +277,7 @@ if __name__ == "__main__":
                         matrixM[numNodes+len(circuitComponents[IVS])+i][nodeNumbers[circuitComponents[VCVS][i].node4]] = 1.0*circuitComponents[VCVS][i].value
                     # CCVS Equations
                     for i in range(len(circuitComponents[CCVS])):
+                        # Equation accounting for current through the source
                         if circuitComponents[VCVS][i].node1 != 'GND':
                             matrixM[nodeNumbers[circuitComponents[CCVS][i].node1]][numNodes+len(circuitComponents[IVS])+len(circuitComponents[VCVS])+i] = 1.0
                         if circuitComponents[VCVS][i].node2 != 'GND':
@@ -292,14 +306,14 @@ if __name__ == "__main__":
                     try:
                         x = np.linalg.solve(matrixM, matrixB)
                         circuitCurrents = []
-                        # Data for printing clear data as output
+                        # Formatting Output Data
                         for v in circuitComponents[IVS]:
                             circuitCurrents.append("current in "+v.name)
                         for v in circuitComponents[VCVS]:
                             circuitCurrents.append("current in "+v.name)
                         for v in circuitComponents[CCVS]:
                             circuitCurrents.append("current in "+v.name)
-                        # Printing data output in table format
+                        # Printing output in table format
                         print(pd.DataFrame(x, circuitNodes+circuitCurrents, columns=['Voltage / Current']))
                     except np.linalg.LinAlgError:
                         sys.exit("Singular Matrix Formed! Please check if you have entered the circuit definition correctly!")
