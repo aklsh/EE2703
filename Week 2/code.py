@@ -3,7 +3,7 @@
  Assignment 2 - EE2703 (Jan-May 2020)
  Done by Akilesh Kannan (EE18B122)
  Created on 18/01/20
- Last Modified on 27/01/20
+ Last Modified on 04/02/20
 -------------------------------------
 '''
 
@@ -313,6 +313,7 @@ if __name__ == "__main__":
                             circuitCurrents.append("current in "+v.name)
                         # Printing output in table format
                         print(pd.DataFrame(x, circuitNodes+circuitCurrents, columns=['Voltage / Current']))
+                        print("The values given above are AMPLITUDE values and NOT RMS values.")
                     except np.linalg.LinAlgError:
                         sys.exit("Singular Matrix Formed! Please check if you have entered the circuit definition correctly!")
                 except ValueError:
