@@ -7,23 +7,100 @@
 
 \title{EE2703: Assignment 3} % Title
 \author{Akilesh Kannan (EE18B122)} % Author name
-\date{February 5, 2020} % Date for the report
+\date{\today} % Date for the report
 
 \begin{document}
     \maketitle % Insert the title, author and date
 
-    \section{Aim}
+    \section{Abstract}
         In this assignment we aim to :
         \begin{itemize}
             \item Observe the error in fitting the \textit{Least Error Fit} function to a given set of data.
             \item Find the relation between the error observed and the noise in the data.
         \end{itemize}
+    \section{Introduction}
+        From linear algebra, we can condense any parameter estimation problem to a simple matrix equation of the form:
+        \begin{equation}
+            \left(\begin{matrix}
+            F_1(t_1) & F_2(t_1) & ... & F_n(t_1)\\
+            F_1(t_2) & F_2(t_2) & ... & F_n(t_2)\\
+            ... & ... & ... & ...\\
+            F_1(t_m) & F_2(t_m) & ... & F_n(t_m)\\
+            \end{matrix}\right)
+            \left(\begin{matrix}
+            p_1\\
+            p_2\\
+            ...\\
+            p_n\\
+            \end{matrix}\right)
+            =
+            \left(\begin{matrix}
+            a_1\\
+            a_2\\
+            ...\\
+            a_m\\
+            \end{matrix}\right)
+            \label{eq0}
+        \end{equation}
+        where,
+        \begin{equation}
+            f(t;p_1, p_2,..,p_n) = \sum_{i=0}^{n}p_iF_i(t)
+        \end{equation}
+        is the function to be estimated, $F_i(t)$ are arbitrary functions of the variable $t$ and $p_i$ are constant parameters.\\
+
+         Since we only have to ``fit'' the real-time data we have to a function, $F_i(t)$ are functions of our choice. Usually we make a few educated guesses for these functions, looking at the plots of these real-time data.\\
+
+         Equation \eqref{eq0} can be written as:
+        \begin{equation}
+            F.\vec{p} = \vec{a_0}
+            \label{eqwithoutnoise}
+        \end{equation}
+
+        But, in any real world situation, there will always be noise associated with the data. To account for that, we have to slightly modify \eqref{eqwithoutnoise} to:
+        \begin{equation}
+            F.\vec{p} = \vec{a_0}+\vec{n} = \vec{a}
+            \label{truenoiseeqn}
+        \end{equation}
+        where $\vec{n}$ accounts for the noise in the data.\\
+
+        However, the above equation cannot be satisfied exactly always (as number of equations is \textbf{\textit{N}}, but the number of measurements is \textbf{\textit{M}}).\\
+
+        So, we make a few assumptions about the noise in the data and then try to ``best guess'' the solution, i.e., the error between the ideal solution, in the absence of noise and the one obtained has to be as minimum as possible.\\
+
+        The assumptions we make about the noise are that it has zero mean and a standard deviation of $\sigma$.\\
+
+        The error function $\epsilon$ is then given by:
+        \begin{equation}
+            \epsilon = F.\vec{p} - \vec{a}
+        \end{equation}
+
+        The norm of the error is:
+        \begin{equation}
+            \|\epsilon\|^2 = \sum_{i}\epsilon_i^2
+        \end{equation}
+
+        or in other words,\\
+        \begin{equation}
+            \|\epsilon\|^2 = \epsilon^T\epsilon = ((F.\vec{p}-\vec{a})^T(F.\vec{p}-\vec{a})) = \sum_{i}\epsilon_i^2
+        \end{equation}
+
+        On expanding the above equation and using the condition that the gradient at the minima is 0, we get:\\
+        \begin{equation}
+            \begin{aligned}
+                2(F^TF)\vec{p_0} - 2F^T\vec{a} = 0\\
+                \implies \vec{p_0} = (F^TF)^{-1}F^T\vec{a}
+            \end{aligned}
+        \end{equation}
+
+        The above result is called the \textbf{\textit{Least Squares Estimate of $\vec{p_0}$ }}.\\
+
+        However, the above result holds true only if the initial functions $F_i(t)$ are independent and that the noise is same for different measurements. This is because, we have to \textit{give lesser importance (\textbf{weight}) to those values which have more noise}, as they are more unreliable.
 
     \section{Procedure}
         The function to be fitted is:
-        \begin{equation*}
+        \begin{equation}
             f(t) = 1.05J_2(t)-0.105t
-        \end{equation*}
+        \end{equation}
         where $J_2(t)$ is the \textit{Bessel Function of the first kind of Order 2}. The true data used for fitting is obtained using this equation.
 
         \subsection{Creating noisy data}
