@@ -35,7 +35,7 @@ def pi_tick(value, tick_number):
     else:
         return r"${0}\pi$".format(N//2)
 
-x = linspace(-2*pi, 4*pi, 500)
+x = linspace(-2*pi, 4*pi, 400)
 
 figure(1)
 ax1 = axes()
@@ -87,7 +87,7 @@ for i in range(1, 26):
 figure(3)
 xticks(np.arange(51), xTicksForCoeffsSemilog, rotation=60)
 tick_params(axis='x', labelsize=7)
-semilogy(coeffCosCos, 'ro')
+semilogy(abs(coeffCosCos), 'ro')
 title('$cos(cos(x))$ semilog plot')
 grid()
 show()
@@ -95,7 +95,7 @@ show()
 figure(4)
 xticks(np.arange(51), xTicksForCoeffsSemilog, rotation=60)
 tick_params(axis='x', labelsize=7)
-semilogy(coeffExp, 'ro')
+semilogy(abs(coeffExp), 'ro')
 title('$e^x$ semilog plot')
 grid()
 show()
@@ -108,7 +108,7 @@ for i in range(1, 26):
 figure(5)
 xticks(np.arange(51), xTicksForCoeffsLogLog, rotation=60)
 tick_params(axis='x', labelsize=7)
-loglog(coeffCosCos, 'ro')
+loglog(abs(coeffCosCos), 'ro')
 title('$cos(cos(x))$ loglog plot')
 grid()
 show()
@@ -116,7 +116,21 @@ show()
 figure(6)
 xticks(np.arange(51), xTicksForCoeffsLogLog, rotation=60)
 tick_params(axis='x', labelsize=7)
-loglog(coeffExp, 'ro')
+loglog(abs(coeffExp), 'ro')
 title('$e^x$ loglog plot')
 grid()
 show()
+
+def createMatrix400by51(x):
+    M = zeros((400, 51), dtype=float, order='C')
+    M[:][0] = 1
+    for k in range(1,26):
+        M[:,2*k-1]=cos(k*x) # cos(kx) column
+        M[:,2*k]=sin(k*x)   # sin(kx) column
+    return M
+matrixA = createMatrix400by51(x)
+matrixB = coscosxFunc(x)
+matrixC, *rest = lstsq(matrixA, matrixB)
+print(matrixC)
+print('')
+print(coeffCosCos)
