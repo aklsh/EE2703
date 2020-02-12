@@ -35,7 +35,8 @@ def pi_tick(value, tick_number):
     else:
         return r"${0}\pi$".format(N//2)
 
-x = linspace(-2*pi, 4*pi, 400)
+x = linspace(-2*pi, 4*pi, 500)
+
 figure(1)
 ax1 = axes()
 ax1.xaxis.set_major_formatter(FuncFormatter(pi_tick))
@@ -43,14 +44,17 @@ plot(x, coscosxFunc(x), 'k', label='True Function', xunits=radians)
 plot(x, coscosxFunc(x%(2*pi)), '--', label='Fourier Series expansion', xunits=radians)
 axis([-6, 10, -1, 2])
 legend(loc='upper right')
+title('$cos(cos(x))$')
 grid()
 show()
+
 figure(2)
 ax2 = axes()
 ax2.xaxis.set_major_formatter(FuncFormatter(pi_tick))
-semilogy(x, exFunc(x), 'k', label='True Function', xunits=radians)
-semilogy(x, exFunc(x%(2*pi)), '--', label='Fourier Series expansion', xunits=radians)
+semilogy(x, exp(x), 'k', label='True Function', xunits=radians)
+semilogy(x, exp(x%(2*pi)), '--', label='Fourier Series expansion', xunits=radians)
 legend(loc='upper left')
+title('$e^x$')
 grid()
 show()
 
@@ -59,41 +63,60 @@ def cosCoeff(x, k, f):
 def sinCoeff(x, k, f):
     return f(x)*sin(k*x)
 
-coscosA = []
-coscosB = []
-expA = []
-expB = []
-coscosB.append(0)
-expB.append(0)
-coscosA.append(quad(coscosxFunc, 0, 2*pi)[0]/(2*pi))
-expA.append(quad(exFunc, 0, 2*pi)[0]/(2*pi))
+def calc51FourierCoeffs (f):
+    aCoeff = np.zeros(26)
+    bCoeff = np.zeros(25)
+    aCoeff[0] = quad(cosCoeff, 0, 2*pi, args=(0, f))[0]/(2*pi)
+    for i in range(1, 26):
+        aCoeff[i] = quad(cosCoeff, 0, 2*pi, args=(i, f))[0]/(pi)
+        bCoeff[i-1] = quad(sinCoeff, 0, 2*pi, args=(i+1, f))[0]/(pi)
+    coeffs = np.zeros(51)
+    coeffs[0] = aCoeff[0]
+    coeffs[1::2] = aCoeff[1:]
+    coeffs[2::2] = bCoeff
+    return coeffs
+
+coeffCosCos = calc51FourierCoeffs(coscosxFunc)
+coeffExp = calc51FourierCoeffs(exp)
+
+xTicksForCoeffsSemilog = ['$a_0$']
 for i in range(1, 26):
-    coscosA.append((quad(cosCoeff, 0, 2*pi, args=(i, coscosxFunc))[0])/pi)
-    expA.append((quad(cosCoeff, 0, 2*pi, args=(i, exFunc))[0])/pi)
-    coscosB.append((quad(sinCoeff, 0, 2*pi, args=(i, coscosxFunc))[0])/pi)
-    expB.append((quad(sinCoeff, 0, 2*pi, args=(i, exFunc))[0])/pi)
-# print(coscosA)
-# print(coscosB)
-cosSeriesCosCos = sinSeriesCosCos = cosSeriesExp = sinSeriesExp = [0]*400
-for i in range(400):
-    for j in range(26):
-        cosSeriesCosCos[i]+=(coscosA[j]*cos(j*x[i]))
-        sinSeriesCosCos[i]+=(coscosB[j]*sin(j*x[i]))
-        cosSeriesExp[i]+=(expA[j]*cos(j*x[i]))
-        sinSeriesExp[i]+=(expB[j]*sin(j*x[i]))
-print(cosSeriesCosCos)
-fourierCosCos = [cosSeriesCosCos[i] + sinSeriesCosCos[i] for i in range(400)]
-fourierExp = [cosSeriesExp[i] + sinSeriesExp[i] for i in range(400)]
+    xTicksForCoeffsSemilog.append('$a_{'+str(i)+'}$')
+    xTicksForCoeffsSemilog.append('$b_{'+str(i)+'}$')
+
 figure(3)
-ax3 = axes()
-ax3.xaxis.set_major_formatter(FuncFormatter(pi_tick))
-plot(x, fourierCosCos, 'ro', label='FS of $cos(cos(x))$', xunits=radians)
-legend()
+xticks(np.arange(51), xTicksForCoeffsSemilog, rotation=60)
+tick_params(axis='x', labelsize=7)
+semilogy(coeffCosCos, 'ro')
+title('$cos(cos(x))$ semilog plot')
+grid()
 show()
+
 figure(4)
-ax4 = axes()
-ax4.xaxis.set_major_formatter(FuncFormatter(pi_tick))
-semilogy(x, fourierExp, 'ro', label='FS of $e^x$', xunits=radians)
-ylim([pow(10, -1), pow(10, 4)])
-legend()
+xticks(np.arange(51), xTicksForCoeffsSemilog, rotation=60)
+tick_params(axis='x', labelsize=7)
+semilogy(coeffExp, 'ro')
+title('$e^x$ semilog plot')
+grid()
+show()
+
+xTicksForCoeffsLogLog = [0]
+for i in range(1, 26):
+    xTicksForCoeffsLogLog.append(i)
+    xTicksForCoeffsLogLog.append(i)
+
+figure(5)
+xticks(np.arange(51), xTicksForCoeffsLogLog, rotation=60)
+tick_params(axis='x', labelsize=7)
+loglog(coeffCosCos, 'ro')
+title('$cos(cos(x))$ loglog plot')
+grid()
+show()
+
+figure(6)
+xticks(np.arange(51), xTicksForCoeffsLogLog, rotation=60)
+tick_params(axis='x', labelsize=7)
+loglog(coeffExp, 'ro')
+title('$e^x$ loglog plot')
+grid()
 show()
