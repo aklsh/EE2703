@@ -7,19 +7,18 @@ Last Modified on 09/02/20
 ------------------------------------
 '''
 
-from pylab import *
+import numpy as np
 from scipy.integrate import quad
-import sys
+from matplotlib import pyplot as plt
 
 def coscosxFunc(x):
-    return cos(cos(x))
-
-def exFunc(x):
-    return exp(x)
+    return np.cos(np.cos(x))
+def expFunc(x):
+    return np.exp(x)
 
 def pi_tick(value, tick_number):
     # find number of multiples of pi/2
-    N = int(round(2 * value / pi))
+    N = int(round(2 * value / PI))
     if N == 0:
         return "0"
     elif N == 1:
@@ -35,102 +34,160 @@ def pi_tick(value, tick_number):
     else:
         return r"${0}\pi$".format(N//2)
 
-x = linspace(-2*pi, 4*pi, 400)
+PI = np.pi
 
-figure(1)
-ax1 = axes()
-ax1.xaxis.set_major_formatter(FuncFormatter(pi_tick))
-plot(x, coscosxFunc(x), 'k', label='True Function', xunits=radians)
-plot(x, coscosxFunc(x%(2*pi)), '--', label='Fourier Series expansion', xunits=radians)
-axis([-6, 10, -1, 2])
-legend(loc='upper right')
-title('$cos(cos(x))$')
-grid()
-show()
+x = np.linspace(-2*PI, 4*PI, 1201)
+x = x[:-1]
 
-figure(2)
-ax2 = axes()
-ax2.xaxis.set_major_formatter(FuncFormatter(pi_tick))
-semilogy(x, exp(x), 'k', label='True Function', xunits=radians)
-semilogy(x, exp(x%(2*pi)), '--', label='Fourier Series expansion', xunits=radians)
-legend(loc='upper left')
-title('$e^x$')
-grid()
-show()
+plt.figure('Figure 1')
+ax1 = plt.axes()
+ax1.xaxis.set_major_formatter(plt.FuncFormatter(pi_tick))
+plt.plot(x, coscosxFunc(x), 'k', label='True Function')
+plt.plot(x, coscosxFunc(x%(2*PI)), '--', label='Fourier Series expansion')
+plt.axis([-6, 10, -1, 2])
+plt.legend(loc='upper right')
+plt.title('$cos(cos(x))$')
+plt.show(block=False)
+
+plt.figure('Figure 2')
+ax2 = plt.axes()
+ax2.xaxis.set_major_formatter(plt.FuncFormatter(pi_tick))
+plt.semilogy(x, expFunc(x), 'k', label='True Function')
+plt.semilogy(x, expFunc(x%(2*PI)), '--', label='Fourier Series expansion')
+plt.legend(loc='upper left')
+plt.title('$e^x$')
+plt.show(block=False)
 
 def cosCoeff(x, k, f):
-    return f(x)*cos(k*x)
+    return f(x)*np.cos(k*x)
 def sinCoeff(x, k, f):
-    return f(x)*sin(k*x)
+    return f(x)*np.sin(k*x)
 
 def calc51FourierCoeffs (f):
     aCoeff = np.zeros(26)
-    bCoeff = np.zeros(25)
-    aCoeff[0] = quad(cosCoeff, 0, 2*pi, args=(0, f))[0]/(2*pi)
+    bCoeff = np.zeros(26)
+    aCoeff[0] = quad(cosCoeff, 0, 2*PI, args=(0, f))[0]/(2*PI)
     for i in range(1, 26):
-        aCoeff[i] = quad(cosCoeff, 0, 2*pi, args=(i, f))[0]/(pi)
-        bCoeff[i-1] = quad(sinCoeff, 0, 2*pi, args=(i+1, f))[0]/(pi)
+        aCoeff[i] = quad(cosCoeff, 0, 2*PI, args=(i, f))[0]/(PI)
+        bCoeff[i] = quad(sinCoeff, 0, 2*PI, args=(i, f))[0]/(PI)
     coeffs = np.zeros(51)
     coeffs[0] = aCoeff[0]
     coeffs[1::2] = aCoeff[1:]
-    coeffs[2::2] = bCoeff
+    coeffs[2::2] = bCoeff[1:]
     return coeffs
 
 coeffCosCos = calc51FourierCoeffs(coscosxFunc)
-coeffExp = calc51FourierCoeffs(exp)
+coeffExp = calc51FourierCoeffs(expFunc)
 
 xTicksForCoeffsSemilog = ['$a_0$']
 for i in range(1, 26):
     xTicksForCoeffsSemilog.append('$a_{'+str(i)+'}$')
     xTicksForCoeffsSemilog.append('$b_{'+str(i)+'}$')
 
-figure(3)
-xticks(np.arange(51), xTicksForCoeffsSemilog, rotation=60)
-tick_params(axis='x', labelsize=7)
-semilogy(abs(coeffCosCos), 'ro')
-title('$cos(cos(x))$ semilog plot')
-grid()
-show()
+plt.figure('Figure 3')
+plt.xticks(np.arange(51), xTicksForCoeffsSemilog, rotation=60)
+plt.tick_params(axis='x', labelsize=7)
+plt.semilogy(abs(coeffCosCos[1::2]), 'bo', label='$a_n$')
+plt.semilogy(abs(coeffCosCos[2::2]), 'yo', label='$b_n$')
+plt.legend()
+plt.title('$cos(cos(x))$ semilog plot')
+plt.show(block=False)
 
-figure(4)
-xticks(np.arange(51), xTicksForCoeffsSemilog, rotation=60)
-tick_params(axis='x', labelsize=7)
-semilogy(abs(coeffExp), 'ro')
-title('$e^x$ semilog plot')
-grid()
-show()
+plt.figure('Figure 4')
+plt.xticks(np.arange(51), xTicksForCoeffsSemilog, rotation=60)
+plt.tick_params(axis='x', labelsize=7)
+plt.semilogy(abs(coeffExp[1::2]), 'bo', label='$a_n$')
+plt.semilogy(abs(coeffExp[2::2]), 'yo', label='$b_n$')
+plt.legend()
+plt.title('$e^x$ semilog plot')
+plt.show(block=False)
 
-xTicksForCoeffsLogLog = [0]
-for i in range(1, 26):
-    xTicksForCoeffsLogLog.append(i)
-    xTicksForCoeffsLogLog.append(i)
+plt.figure('Figure 5')
+plt.loglog(abs(coeffCosCos[1::2]), 'bo', label='$a_n$')
+plt.loglog(abs(coeffCosCos[2::2]), 'yo', label='$b_n$')
+plt.legend()
+plt.title('$cos(cos(x))$ loglog plot')
+plt.show(block=False)
 
-figure(5)
-xticks(np.arange(51), xTicksForCoeffsLogLog, rotation=60)
-tick_params(axis='x', labelsize=7)
-loglog(abs(coeffCosCos), 'ro')
-title('$cos(cos(x))$ loglog plot')
-grid()
-show()
+plt.figure('Figure 6')
+plt.loglog(abs(coeffExp[1::2]), 'bo', label='$a_n$')
+plt.loglog(abs(coeffExp[2::2]), 'yo', label='$b_n$')
+plt.legend()
+plt.title('$e^x$ loglog plot')
+plt.show(block=False)
 
-figure(6)
-xticks(np.arange(51), xTicksForCoeffsLogLog, rotation=60)
-tick_params(axis='x', labelsize=7)
-loglog(abs(coeffExp), 'ro')
-title('$e^x$ loglog plot')
-grid()
-show()
-
-def createMatrix400by51(x):
-    M = zeros((400, 51), dtype=float, order='C')
-    M[:][0] = 1
+def findLSTSQCoeff(f):
+    x = np.linspace(0, 2*PI, 401)
+    x = x[:-1]
+    b = f(x)
+    M = np.zeros((400, 51))
+    M[:,0] = 1
     for k in range(1,26):
-        M[:,2*k-1]=cos(k*x) # cos(kx) column
-        M[:,2*k]=sin(k*x)   # sin(kx) column
-    return M
-matrixA = createMatrix400by51(x)
-matrixB = coscosxFunc(x)
-matrixC, *rest = lstsq(matrixA, matrixB)
-print(matrixC)
-print('')
-print(coeffCosCos)
+        M[:,(2*k)-1]=np.cos(k*x)
+        M[:,2*k]=np.sin(k*x)
+    return np.linalg.lstsq(M, b, rcond=None)[0]
+
+lstsqCosCos = findLSTSQCoeff(coscosxFunc)
+# print(lstsqCosCos)
+# print(coeffCosCos)
+
+lstsqExp = findLSTSQCoeff(expFunc)
+# print(lstsqExp)
+# print(coeffExp)
+
+plt.figure('Figure 3.1')
+plt.semilogy(abs(coeffCosCos), 'ro', label='By Integration')
+plt.semilogy(abs(lstsqCosCos), 'go', label='By lstsq')
+plt.title('Comparing $cos(cos(x))$ FS coefficients - semilogy plot')
+plt.legend()
+plt.show(block=False)
+
+plt.figure('Figure 4.1')
+plt.semilogy(abs(coeffExp), 'ro', label='By Integration')
+plt.semilogy(abs(lstsqExp), 'go', label='By lstsq')
+plt.title('Comparing $e^x$ FS coefficients - semilogy plot')
+plt.legend()
+plt.show(block=False)
+
+plt.figure('Figure 5.1')
+plt.loglog(abs(coeffCosCos), 'ro', label='By Integration')
+plt.loglog(abs(lstsqCosCos), 'go', label='By lstsq')
+plt.title('Comparing $cos(cos(x))$ FS coefficients - loglog plot')
+plt.legend()
+plt.show(block=False)
+
+plt.figure('Figure 6.1')
+plt.loglog(abs(coeffExp), 'ro', label='By Integration')
+plt.loglog(abs(lstsqExp), 'go', label='By lstsq')
+plt.title('Comparing $e^x$ FS coefficients - loglog plot')
+plt.legend()
+plt.show(block=False)
+
+absErrorsCosCos = [abs(coeffCosCos[i]-lstsqCosCos[i]) for i in range(len(coeffCosCos))]
+absErrorsExp = [abs(coeffExp[i]-lstsqExp[i]) for i in range(len(coeffExp))]
+
+print('Max. deviation for cos(cos(x)): '+str(max(absErrorsCosCos)))
+print('Max. deviation for exp(x): '+str(max(absErrorsExp)))
+
+xNew = np.linspace(0, 2*PI, 401)
+xNew = xNew[:-1]
+
+matrixA = np.zeros((400,51))
+matrixA[:,0] = 1
+for k in range(1,26):
+    matrixA[:,(2*k)-1]=np.cos(k*xNew)
+    matrixA[:,2*k]=np.sin(k*xNew)
+
+plt.figure('Figure 7')
+plt.plot(matrixA@coeffCosCos, 'go', label='Integration')
+plt.plot(matrixA@lstsqCosCos, 'r', label='lstsq')
+plt.title('Reconstruction of $cos(cos(x))$')
+plt.legend()
+plt.show(block=False)
+
+plt.figure('Figure 8')
+plt.plot(matrixA@coeffExp, 'go', label='Integration')
+plt.plot(matrixA@lstsqExp, 'r', label='lstsq')
+plt.title('Reconstruction of $e^x$')
+plt.legend()
+plt.show()
