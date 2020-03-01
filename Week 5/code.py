@@ -28,7 +28,7 @@ args=parser.parse_args()
 phi = np.zeros((Nx, Ny), dtype=float)
 x = np.linspace(-radius*1.25, radius*1.25, Nx)
 y = np.linspace(-radius*1.25, radius*1.25, Ny)
-Y, X = np.meshgrid(-y,x)
+X, Y = np.meshgrid(x, -y)
 
 volt1Nodes = np.where(np.square(X)+np.square(Y) <= radius**2)
 phi[volt1Nodes] = 1.0
@@ -45,7 +45,7 @@ plt.show(block=False)
 # Start iterations
 iteration=[]
 error=[]
-for x in range(Niter):
+for n in range(Niter):
     # Copy old phi
     oldphi = phi.copy()
 
@@ -62,7 +62,7 @@ for x in range(Niter):
     phi[volt1Nodes] = 1.0
 
     error.append(np.abs(phi-oldphi).max())
-    iteration.append(x)
+    iteration.append(n)
 
 plt.figure(2)
 plt.semilogy(iteration, error)
@@ -98,15 +98,15 @@ fitAll, estimateAll = findFit(error, iteration)
 fitAfter500, estimateAfter500 = findFit(error[501:], iteration[501:])
 
 plt.figure(4)
-plt.semilogy(iteration, np.exp(estimateAll), 'r.', mfc='none', label='fit all')
-plt.semilogy(iteration[501:], np.exp(estimateAfter500), 'y.', mfc='none', label='fit after 500')
+plt.semilogy(iteration[::200], np.exp(estimateAll[::200]), 'r.', mfc='none', label='fit all')
+plt.semilogy(iteration[501::200], np.exp(estimateAfter500[::200]), 'y.', mfc='none', label='fit after 500')
 plt.semilogy(iteration, error, 'g', label='actual error')
 plt.title('Comparison of actual errors and fits')
 plt.xlabel('iteration')
 plt.ylabel('error / fit')
 plt.legend()
 plt.savefig(plotsDir+'Fig4.png')
-plt.show(block=True)
+plt.show(block=False)
 
 def cummulError(N, A, B):
     return -(A/B)*np.exp(B*(N+0.5))
@@ -116,11 +116,50 @@ def findStopCond(errors, Niter, error_tol):
     for n in range(1, Niter):
         cummulErr.append(cummulError(n, np.exp(fitAll[0]), fitAll[1]))
         if(cummulErr[n-1] <= error_tol):
-            print("last per-iteration change in the error is %g" % (np.abs(cummulErr[-1]-cummulErr[-2])))
+            print("last \033[1mper-iteration change\033[0;0m in the error is ", (np.abs(cummulErr[-1]-cummulErr[-2])))
             return cummulErr[n-1], n
-    print("last per-iteration change in the error is %g" % (np.abs(cummulErr[-1]-cummulErr[-2])))
+    print("last \033[1mper-iteration change\033[0;0m in the error is ", (np.abs(cummulErr[-1]-cummulErr[-2])))
     return cummulErr[-1], Niter
 
 errorTol = 10e-8
 cummulErr, nStop = findStopCond(error, Niter, errorTol)
-print("Stopping Condition N: %g and Error is %g" % (nStop, cummulErr))
+print("\033[1mStopping Condition\033[0;0m ----> N: %g and Error: %g" % (nStop, cummulErr))
+
+fig5 = plt.figure(5)
+ax = p3.Axes3D(fig5)
+plt.title('The 3-D surface plot of $\phi$')
+surfacePlot = ax.plot_surface(X, Y, phi, rstride=1, cstride=1, cmap=cm.jet)
+cax = fig5.add_axes([1, 0, 0.1, 1])
+ax.set_xlabel('$x$')
+ax.set_ylabel('$y$')
+ax.set_zlabel('$z$')
+fig5.colorbar(surfacePlot, cax=cax, orientation='vertical')
+plt.show(block=False)
+plt.savefig(plotsDir+'Fig5.png')
+
+plt.figure(6)
+plt.contourf(X, Y, phi, cmap=cm.jet)
+ax = plt.axes()
+ax.set_aspect('equal')
+plt.colorbar(ax=ax, orientation='vertical')
+plt.title('Updated Contour Plot of $\phi$')
+plt.xlabel('x')
+plt.ylabel('y')
+plt.savefig(plotsDir+'Fig6.png')
+plt.show(block=False)
+
+Jx = np.zeros((Ny,Nx))
+Jy = np.zeros((Ny,Nx))
+
+Jx[1:-1, 1:-1] = (phi[1:-1, 0:-2] - phi[1:-1, 2:])/2.0
+Jx[1:-1, 1:-1] = (phi[0:-2, 1:-1] - phi[2:, 1:-1])/2.0
+
+fig7 = plt.figure(7).add_subplot(111)
+fig7.scatter(x[volt1Nodes[0]], y[volt1Nodes[1]], color='r', s=12, label='$V = 1V$ region')
+fig7.quiver(y, x, Jy[::-1,:], Jx[::-1,:])
+fig7.set_xlabel('x')
+fig7.set_ylabel('y')
+plt.legend()
+plt.show(block=True)
+plt.title('Vector plot of flow of current')
+plt.savefig(plotsDir+'Fig7.png')
