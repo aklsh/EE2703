@@ -43,8 +43,8 @@ plt.savefig(plotsDir+'Fig1.png')
 plt.show(block=False)
 
 # Start iterations
-iteration=[]
-error=[]
+iteration = []
+error = []
 for n in range(Niter):
     # Copy old phi
     oldphi = phi.copy()
@@ -154,12 +154,13 @@ Jy = np.zeros((Ny,Nx))
 Jx[1:-1, 1:-1] = (phi[1:-1, 0:-2] - phi[1:-1, 2:])/2.0
 Jx[1:-1, 1:-1] = (phi[0:-2, 1:-1] - phi[2:, 1:-1])/2.0
 
-fig7 = plt.figure(7).add_subplot(111)
-fig7.scatter(x[volt1Nodes[0]], y[volt1Nodes[1]], color='r', s=12, label='$V = 1V$ region')
-fig7.quiver(y, x, Jy[::-1,:], Jx[::-1,:])
-fig7.set_xlabel('x')
-fig7.set_ylabel('y')
+plt.figure(7)
+plt.scatter(x[volt1Nodes[0]], y[volt1Nodes[1]], color='r', s=12, label='$V = 1V$ region')
+plt.axes().quiver(y, x, Jy[::-1,:], Jx[::-1,:])
+plt.xlabel('x')
+plt.ylabel('y')
 plt.legend()
 plt.show(block=True)
 plt.title('Vector plot of flow of current')
 plt.savefig(plotsDir+'Fig7.png')
+plt.show(block=True)
