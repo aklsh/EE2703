@@ -18,10 +18,10 @@ import sys
 plotsDir = 'plots/'
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--Nx", help='size along x', type=int, default=25, metavar='nx')
-parser.add_argument("--Ny", help='size along y', type=int, default=25, metavar='ny')
-parser.add_argument("--radius", help='radius of central lead', type=float, default=8, metavar='r')
-parser.add_argument("--Niter", help='number of iterations to perform', type=int, default=1500, metavar='ni')
+parser.add_argument("--Nx", help='size along x', type=int, default=50, metavar='nx')
+parser.add_argument("--Ny", help='size along y', type=int, default=50, metavar='ny')
+parser.add_argument("--radius", help='radius of central lead', type=float, default=0.35, metavar='r')
+parser.add_argument("--Niter", help='number of iterations to perform', type=int, default=4000, metavar='ni')
 args=parser.parse_args()
 [Nx, Ny, radius, Niter] = [args.Nx, args.Ny, args.radius, args.Niter]
 
@@ -101,6 +101,7 @@ plt.figure(4)
 plt.semilogy(iteration[::200], np.exp(estimateAll[::200]), 'r.', mfc='none', label='fit all')
 plt.semilogy(iteration[501::200], np.exp(estimateAfter500[::200]), 'y.', mfc='none', label='fit after 500')
 plt.semilogy(iteration, error, 'g', label='actual error')
+print('A = {0} and  B = {1} from Fit 1\nA={2} and B = {3} from Fit 2'.format(np.exp(fitAll[0]), fitAll[1], np.exp(fitAfter500[0]), fitAfter500[1]))
 plt.title('Comparison of actual errors and fits')
 plt.xlabel('iteration')
 plt.ylabel('error / fit')
@@ -151,15 +152,14 @@ plt.show(block=False)
 Jx = np.zeros((Ny,Nx))
 Jy = np.zeros((Ny,Nx))
 
-Jx[1:-1, 1:-1] = (phi[1:-1, 0:-2] - phi[1:-1, 2:])/2.0
-Jx[1:-1, 1:-1] = (phi[0:-2, 1:-1] - phi[2:, 1:-1])/2.0
+Jx[1:-1, 1:-1] = (phi[1:-1, 0:-2] - phi[1:-1, 2:])*0.5
+Jy[1:-1, 1:-1] = (phi[2:, 1:-1] - phi[0:-2, 1:-1])*0.5
 
 plt.figure(7)
 plt.scatter(x[volt1Nodes[0]], y[volt1Nodes[1]], color='r', s=12, label='$V = 1V$ region')
-plt.axes().quiver(y, x, Jy[::-1,:], Jx[::-1,:])
+plt.axes().quiver(X, Y, Jx, Jy)
+plt.axes().set_title('Vector Plot of current')
 plt.xlabel('x')
 plt.ylabel('y')
 plt.legend()
 plt.show(block=True)
-plt.title('Vector plot of flow of current')
-plt.savefig(plotsDir+'Fig7.png')
