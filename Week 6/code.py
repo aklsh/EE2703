@@ -27,6 +27,7 @@ def findX(a, w):
 
 
 t, x = findX(0.5, 1.5)
+plt.figure(1)
 plt.plot(t, x, label='decay=0.5')
 plt.xlabel(r"$t \to$")
 plt.ylabel(r"$x(t) \to$")
@@ -37,6 +38,7 @@ plt.ylim(-1, 1)
 plt.show()
 
 t, x = findX(0.05, 1.5)
+plt.figure(2)
 plt.plot(t, x, label='decay=0.05')
 plt.xlabel(r"$t \to$")
 plt.ylabel(r"$x(t) \to$")
@@ -59,8 +61,9 @@ def ft(t, decay, w):
 
 
 q3Hs = sgnl.lti([1], [1, 0, 2.25])
+plt.figure(3)
 for w in np.arange(1.4, 1.6, 0.05):
-    tvector = np.linspace(0,50,1000)
+    tvector = np.linspace(0, 50, 1000)
     t, y, rest = sgnl.lsim(q3Hs, U=ft(tvector, 0.05, w), T=tvector)
     plt.plot(t, y, label='$w = {} rad/s$'.format(w))
     plt.legend()
@@ -68,3 +71,36 @@ plt.xlabel(r"$t \to$")
 plt.ylabel(r"$x(t) \to$")
 plt.grid()
 plt.show()
+
+Xs = sgnl.lti([1, 0, 2], [1, 0, 3, 0])
+t, x = sgnl.impulse(Xs, None, np.linspace(0, 20, 1000))
+Ys = sgnl.lti([2], [1, 0, 3, 0])
+t, y = sgnl.impulse(Ys, None, np.linspace(0, 20, 1000))
+
+plt.figure(4)
+plt.plot(t, y, label=r"$y(t)$")
+plt.plot(t, x, label=r"$x(t)$")
+plt.xlabel(r"$t \to$")
+plt.legend()
+plt.show()
+
+L = 1e-6
+C = 1e-6
+R = 100
+q4Hs = sgnl.lti([1], [L*C, R*C, 1])
+w, mag, phase = sgnl.bode(q4Hs)
+
+plt.figure(5)
+plt.semilogx(w, mag)
+plt.xlabel(r"$\omega \ \to$")
+plt.ylabel(r"$\|H(jw)\|$")
+plt.title("Magnitude plot")
+plt.show()
+
+plt.figure(6)
+plt.xlabel(r"$\omega \ \to$")
+plt.ylabel(r"$\angle H(jw)$")
+plt.title("Phase plot")
+plt.semilogx(w, phase)
+plt.show()
+
