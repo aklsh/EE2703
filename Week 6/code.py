@@ -87,8 +87,8 @@ plt.show()
 L = 1e-6
 C = 1e-6
 R = 100
-q4Hs = sgnl.lti([1], [L*C, R*C, 1])
-w, mag, phase = sgnl.bode(q4Hs)
+q5Hs = sgnl.lti([1], [L*C, R*C, 1])
+w, mag, phase = sgnl.bode(q5Hs)
 
 plt.figure(5)
 plt.semilogx(w, mag)
@@ -104,3 +104,16 @@ plt.title("Phase plot")
 plt.semilogx(w, phase)
 plt.show()
 
+t = np.linspace(0, 0.1, 1e6)
+vi = np.cos(1e3*t) - np.cos(1e6*t)
+taxis, vout, rest = sgnl.lsim(q5Hs, vi, t)
+
+plt.figure(7)
+plt.plot(taxis, vout)
+plt.show()
+
+plt.figure(8)
+plt.plot(taxis, vout)
+plt.xlim(0, 3e-5)
+plt.ylim(0, 0.25)
+plt.show()
