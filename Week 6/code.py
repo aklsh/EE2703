@@ -45,6 +45,14 @@ plt.legend()
 plt.grid()
 plt.show()
 
+'''
+f(t) = e^(-at)cos(wt)u(t)
+
+t ---> time vector
+decay ---> decay
+w ---> frequency
+'''
+
 
 def ft(t, decay, w):
     return np.exp(-decay*t)*np.cos(w*t)
@@ -52,7 +60,8 @@ def ft(t, decay, w):
 
 q3Hs = sgnl.lti([1], [1, 0, 2.25])
 for w in np.arange(1.4, 1.6, 0.05):
-    t, y, rest = sgnl.lsim(q3Hs, U=ft(np.linspace(0, 50, 1000), 0.05, w), T=np.linspace(0, 50, 1000))
+    tvector = np.linspace(0,50,1000)
+    t, y, rest = sgnl.lsim(q3Hs, U=ft(tvector, 0.05, w), T=tvector)
     plt.plot(t, y, label='$w = {} rad/s$'.format(w))
     plt.legend()
 plt.xlabel(r"$t \to$")
