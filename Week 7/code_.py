@@ -15,6 +15,7 @@ import sympy as sym
 PI = np.pi
 s = sym.symbols('s')
 plotsDir='plots/'
+t = np.linspace(0, 0.1, 1e6)
 
 plt.rcParams['figure.figsize'] = 18, 6
 plt.rcParams['font.family'] = "sans"
@@ -65,9 +66,9 @@ plt.ylabel(r'$\angle H(j\omega)$')
 plt.savefig(plotsDir+'Fig 1.png')
 
 ## Calculate step response
-t, voStep = sgnl.step(ckt1, None, np.linspace(0, 0.1, 1000000))
+time, voStep = sgnl.step(ckt1, None, t)
 plt.figure(2)
-plt.plot(t, voStep)
+plt.plot(time, voStep)
 plt.title(r'Step Response of Lowpass filter')
 plt.xlabel(r'$t\ \to$')
 plt.ylabel(r'$V_o(t)\ \to$')
@@ -76,7 +77,7 @@ plt.grid(True)
 plt.savefig(plotsDir+'Fig 2.png')
 
 # Question 2
-vi = np.heaviside(t,1)*(np.sin(2e3*PI*t)+np.cos(2e6*PI*t))
+vi = np.heaviside(t, 1)*(np.sin(2e3*PI*t)+np.cos(2e6*PI*t))
 
 plt.figure(3)
 plt.plot(t, vi)
@@ -87,7 +88,7 @@ plt.xlim(0, 1e-3)
 plt.grid(True)
 plt.savefig(plotsDir+'Fig 3.png')
 
-time, vOut, rest = sgnl.lsim(ckt1, vi, np.linspace(0, 1e-1, 1e6))
+time, vOut, rest = sgnl.lsim(ckt1, vi, t)
 plt.figure(4)
 plt.plot(time, vOut)
 plt.title(r'$V_o(t)$ for $V_i(t)=(sin(2x10^3\pi t)+cos(2x10^6\pi t))u(t)$ for Lowpass filter')
@@ -128,36 +129,64 @@ plt.xlabel(r'$\omega \ \to$')
 plt.ylabel(r'$\angle H(j\omega)$')
 plt.savefig(plotsDir+'Fig 5.png')
 
-## Calculate step response
-t, voStep = sgnl.step(ckt2, None, np.linspace(0, 0.1, 1000000))
+vi = np.heaviside(t, 1)*(np.sin(2e3*PI*t)+np.cos(2e6*PI*t))
+
 plt.figure(6)
-plt.plot(t, voStep)
-plt.title(r'Step Response of Highpass filter')
-plt.xlabel(r'$t\ \to$')
-plt.ylabel(r'$V_o(t)\ \to$')
-plt.xlim(0, 1e-3)
-plt.grid(True)
-plt.savefig(plotsDir+'Fig 6.png')
-
-vi = np.heaviside(t,1)*(np.sin(2e3*PI*t)+np.cos(2e6*PI*t))
-
-plt.figure(7)
 plt.plot(t, vi)
 plt.title(r'$V_i(t)=(sin(2x10^3\pi t)+cos(2x10^6\pi t))u(t)$ to Highpass filter')
 plt.xlabel(r'$t\ \to$')
 plt.ylabel(r'$V_i(t)\ \to$')
 plt.xlim(0, 1e-3)
 plt.grid(True)
-plt.savefig(plotsDir+'Fig 7.png')
+plt.savefig(plotsDir+'Fig 6.png')
 
-time, vOut, rest = sgnl.lsim(ckt2, vi, np.linspace(0, 1e-1, 1e6))
-plt.figure(8)
+time, vOut, rest = sgnl.lsim(ckt2, vi, t)
+plt.figure(7)
 plt.plot(time, vOut)
 plt.title(r'$V_o(t)$ for $V_i(t)=(sin(2x10^3\pi t)+cos(2x10^6\pi t))u(t)$ for Highpass filter')
 plt.xlabel(r'$t\ \to$')
 plt.ylabel(r'$V_o(t)\ \to$')
 plt.xlim(0, 1e-3)
 plt.grid(True)
+plt.savefig(plotsDir+'Fig 7.png')
+
+
+# Question 4
+
+viDampedLowFreq = np.heaviside(t, 1)*(np.sin(2*PI*t))*np.exp(-t)
+viDampedHighFreq = np.heaviside(t, 1)*(np.sin(2e5*PI*t))*np.exp(-t)
+
+## Output for low frequency damped sinusoid
+time, vOutDampedLowFreq, rest = sgnl.lsim(ckt2, viDampedLowFreq, t)
+plt.figure(8)
+plt.plot(time, vOutDampedLowFreq)
+plt.title(r'$V_o(t)$ for $V_i(t)=sin(2\pi t)e^{-t}u(t)$ for Highpass filter')
+plt.xlabel(r'$t\ \to$')
+plt.ylabel(r'$V_o(t)\ \to$')
+plt.xlim(0, 1e-3)
+plt.grid(True)
 plt.savefig(plotsDir+'Fig 8.png')
+
+## Output for high frequency damped sinusoid
+time, vOutDampedHighFreq, rest = sgnl.lsim(ckt2, viDampedHighFreq, t)
+plt.figure(9)
+plt.plot(time, vOutDampedHighFreq)
+plt.title(r'$V_o(t)$ for $V_i(t)=sin(2x10^5\pi t)e^{-t}u(t)$ for Highpass filter')
+plt.xlabel(r'$t\ \to$')
+plt.ylabel(r'$V_o(t)\ \to$')
+plt.xlim(0, 1e-3)
+plt.grid(True)
+plt.savefig(plotsDir+'Fig 9.png')
+
+# Question 5
+time, voStep = sgnl.step(ckt2, None, t)
+plt.figure(10)
+plt.plot(time, voStep)
+plt.title(r'Step Response of Highpass filter')
+plt.xlabel(r'$t\ \to$')
+plt.ylabel(r'$V_o(t)\ \to$')
+plt.xlim(0, 1e-3)
+plt.grid(True)
+plt.savefig(plotsDir+'Fig 10.png')
 
 plt.show()
