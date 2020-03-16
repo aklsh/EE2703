@@ -7,10 +7,12 @@ Last Modified on 15/03/20
 ------------------------------------
 '''
 
+# Imports
 import numpy as np
 import numpy.fft as fft
 import matplotlib.pyplot as plt
 
+# GLobal Variables
 plotsDir = 'plots/'
 PI = np.pi
 
@@ -28,7 +30,7 @@ plt.legend()
 plt.title('Comparison of actual and computed $x(t)$')
 plt.savefig(plotsDir+'Fig0.png')
 maxError = max(np.abs(xComputed-xOriginal))
-print(r'Magnitude of maximum error between actual and computed values: ', maxError)     # order of 1e-15
+print(r'Magnitude of maximum error between actual and computed values of the random sequence: ', maxError)     # order of 1e-15
 
 
 ## Spectrum of sin(5t)
@@ -158,8 +160,44 @@ plt.savefig(plotsDir+'Fig5.png')
 
 ## Spectrum of Gaussian
 
+### Phase and Magnitude of estimated Gaussian Spectrum
+t =  np.linspace(-4*PI, 4*PI, 513)
+t = t[:-1]
+xTrueGaussian = np.exp(-(t**2)/2)
+Y = fft.fftshift(fft.fft(xTrueGaussian))*4/512.0
+fig6 = plt.figure(6)
+fig6.suptitle(r'Comparison of spectrum of $e^{-\frac{t^2}{2}}$')
+YMag = np.abs(Y)
+YPhase = np.angle(Y)
+w = np.linspace(-64, 64, 513)
+w = w[:-1]
+plt.subplot(221)
+plt.plot(w, YMag)
+plt.xlim([-10, 10])
+plt.ylabel(r'$\|Y\|$')
+plt.grid()
+plt.subplot(223)
+plt.plot(w, YPhase, 'r')
+plt.xlim([-10, 10])
+plt.ylabel(r'$\angle Y$')
+plt.xlabel(r'$k\ \to$')
 
+### Phase and Magnitude of true Gaussian spectrum
+trueY = np.exp(-w**2/2)/np.sqrt(2*PI)
+trueYMag = np.abs(trueY)
+trueYPhase = np.angle(trueY)
+plt.subplot(222)
+plt.plot(w, trueYMag)
+plt.xlim([-10, 10])
+plt.grid()
+plt.subplot(224)
+plt.plot(w, trueYPhase, 'r')
+plt.xlim([-10, 10])
+plt.xlabel(r'$k\ \to$')
+plt.savefig(plotsDir+'Fig6.png')
 
+maxError = max(np.abs(trueY - Y))
+print(r'Magnitude of maximum error between actual and computed values of the Gaussian: ', maxError)     #
 
 
 plt.show()
