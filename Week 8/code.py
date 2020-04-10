@@ -12,7 +12,7 @@ import numpy as np
 import scipy.fftpack as fft
 import matplotlib.pyplot as plt
 
-# GLobal Variables
+# Global Variables
 plotsDir = 'plots/'
 PI = np.pi
 
@@ -172,22 +172,25 @@ plt.savefig(plotsDir+'Fig5.png')
 ## Spectrum of Gaussian
 
 ### Phase and Magnitude of estimated Gaussian Spectrum
-t =  np.linspace(-4*PI, 4*PI, 513)
+# I have chosen a window from [-8pi, 8pi] and took 512 points in that interval
+
+t =  np.linspace(-8*PI, 8*PI, 513)
 t = t[:-1]
 xTrueGaussian = np.exp(-(t**2)/2)
-Y = fft.fftshift(fft.fft(xTrueGaussian))*4/512.0
+Y = fft.fftshift(fft.fft(fft.ifftshift(xTrueGaussian)))*8/512.0
 fig6 = plt.figure(6)
 fig6.suptitle(r'Comparison of spectrum of $e^{-\frac{t^2}{2}}$')
 YMag = np.abs(Y)
 YPhase = np.angle(Y)
-presentFreqs = np.where(YMag < 1e-3)
-YPhase[presentFreqs] = 0
+absentFreqs = np.where(YMag < 1e-3)
+YPhase[absentFreqs] = 0
 w = np.linspace(-40, 40, 513)
 w = w[:-1]
 plt.subplot(221)
 plt.plot(w, YMag, lw=2)
 plt.xlim([-10, 10])
 plt.ylabel(r'$\|Y\|$')
+plt.title("Estimated Spectrum")
 plt.grid()
 plt.subplot(223)
 plt.plot(w, YPhase, 'ro', lw=2)
@@ -198,12 +201,13 @@ plt.xlabel(r'$k\ \to$')
 plt.grid()
 
 ### Phase and Magnitude of true Gaussian spectrum
-trueY = np.exp(-w**2/2)/np.sqrt(2*PI)
+trueY = np.exp(-(w**2)/2)/np.sqrt(2*PI)
 trueYMag = np.abs(trueY)
 trueYPhase = np.angle(trueY)
 plt.subplot(222)
 plt.plot(w, trueYMag)
 plt.xlim([-10, 10])
+plt.title("True Spectrum")
 plt.grid()
 plt.subplot(224)
 plt.plot(w, trueYPhase, 'ro')
