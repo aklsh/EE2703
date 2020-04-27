@@ -1,0 +1,528 @@
+\documentclass[11pt, a4paper, twoside]{article}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage[margin=0.8in]{geometry}
+\usepackage{listings}
+\usepackage{float}
+\usepackage{fancyhdr}
+\usepackage{indentfirst}
+\usepackage[inline]{enumitem}
+\usepackage{xcolor}
+\usepackage{minted}
+\usemintedstyle{borland}
+\usepackage[belowskip=0pt,aboveskip=0pt,font=small,labelfont=small]{caption}
+\captionsetup{width=0.9\linewidth}
+\setlength\intextsep{0pt}
+
+\setlist[itemize]{noitemsep, topsep=0pt}
+\fancyhead[RO,LE]{EE2703: Assignment 5}
+\fancyhead[LO,RE]{Akilesh Kannan}
+\cfoot{\thepage}
+
+\title{EE2703: Assignment 5}
+\author{Akilesh Kannan (EE18B122)}
+\date{\today}
+
+\pagestyle{fancy}
+\begin{document}	
+	
+\maketitle % Insert the title, author and date		
+  \section{Introduction}
+  This report will discuss about the solver for the currents in a
+resistor and discusses about the current's dependency on the shape of
+the resistor and also discusses which part of the resistor is likely to
+get hottest.Here we analyse the currents in a square copper plate to
+which a wire is soldered to the middle of it.It also discuss about how
+to find stopping condition for the solver after certain iterations,and
+to model the errors obtained using Least Squares after analysing the
+actual errors in semilog and loglog plots.And finally we find the
+currents in the resistor after applying boundary conditions and analyse
+the vector plot of current flow and conclude which part of resistor will
+become hot.
+
+	\begin{itemize}
+    \item
+      A wire is soldered to the middle of a copper plate and its voltage is
+      held at 1 Volt. One side of the plate is rounded, while the remaining
+      are floating. The pblate is 1 cm by 1 cm in size.
+    \item
+      To solve for currents in resistor,we use following equations and
+      boundary conditions mentioned below:
+    \item
+      Conductivity (Differential form of ohm's law)
+    \end{itemize}
+    
+    \begin{equation}
+    \vec{J} = \sigma\vec{E}
+       \end{equation}
+    
+    \begin{itemize}
+    \item
+      Electric field is the gradient of the potential
+    \end{itemize}
+    
+    \begin{equation}
+    \vec{E} = -\nabla{\phi}
+       \end{equation}
+    
+    \begin{itemize}
+    \item
+      Charge Continuity equation is used to conserve the inflow and outflow
+      charges
+    \end{itemize}
+    
+    \begin{equation}
+    \nabla.\vec{J} = -\frac{\partial \rho}{\partial t}
+       \end{equation}
+    
+    \begin{itemize}
+    \item
+      Combining the above equations above, we get
+    \end{itemize}
+    
+    \begin{equation}
+    \nabla.(-\sigma\nabla\phi) = -\frac{\partial \rho}{\partial t}
+       \end{equation}
+    
+    \begin{itemize}
+    \item
+      Assuming that our resistor contains a material of constant
+      conductivity, the equation becomes
+    \end{itemize}
+    
+    \begin{equation}
+    \nabla^{2}\phi = \frac{1}{\sigma}\frac{\partial \rho}{\partial t}
+       \end{equation}
+    
+    \begin{itemize}
+    \item
+      For DC currents, the right side is zero, and we obtain
+    \end{itemize}
+    
+    \begin{equation}
+    \nabla^{2}\phi = 0
+       \end{equation}
+    
+    \begin{itemize}
+    \item
+      Here we use a 2-D plate so the Numerical solutions in 2D can be easily
+      transformed into a difference equation. The equation can be written
+      out in
+    \end{itemize}
+    
+    \begin{equation}
+    \frac{\partial^{2} \phi}{\partial x^{2}}+ \frac{\partial^{2} \phi}{\partial y^{2}} = 0
+     \end{equation}
+    
+    \begin{equation}
+    \frac{\partial \phi}{\partial x}_{(x_i,y_j)} = \frac{\phi(x_{i+1/2},y_j) - \phi(x_{i-1/2},y_j)}{\Delta x}
+     \end{equation}
+    
+    \begin{equation}
+    \frac{\partial^{2} \phi}{\partial x^{2}}_{(x_i,y_j)} = \frac{\phi(x_{i+1},y_j) -2\phi(x_i,y_j)+ \phi(x_{i-1},y_j)}{(\Delta x)^{2}}
+     \end{equation}
+    
+    \begin{itemize}
+    \item
+      Using above equations we get
+    \end{itemize}
+    
+    \begin{equation}
+            \phi_{i,j} = \frac{\phi_{i+1,j} + \phi_{i-1,j} + \phi_{i,j+1} + \phi_{i,j-1}}{4} 
+    \end{equation}
+    
+    \begin{itemize}
+    \item
+      Thus, the potential at any point should be the average of its
+      neighbours. This is a very general result and the above calculation is
+      just a special case of it. So the solution process is to take each
+      point and replace the potential by the average of its neighbours. Keep
+      iterating till the solution converges (i.e., the maximum change in
+      elements of \(\phi\) which is denoted by \(error_k\) in the code
+      ,where 'k' is the no of iteration, is less than some tolerance which
+      is taken as \(10^{-8}\)).
+    \item
+      At boundaries where the electrode is present, just put the value of
+      potential itself. At boundaries where there is no electrode, the
+      current should be tangential because charge can't leap out of the
+      material into air. Since current is proportional to the Electric
+      Field, what this means is the gradient of \(\phi\) should be
+      tangential. This is implemented by requiring that \(\phi\) should not
+      vary in the normal direction
+    \item
+      At last we solve for currents in the resistor using all these
+      information!
+  \end{itemize}
+
+  \section{Python Code :}\label{python-code}
+  \subsection{Question 1}\label{question-1}
+
+\subsubsection{Part A}\label{part-a}
+
+\begin{itemize}
+\item
+  Define the Parameters, The parameter values taken for my particular code were \(N_x = 50\) and \(N_y = 50\) and No of
+  iterations : 4000
+\item
+  These values are taken to discuss about Stopping condition,etc
+\item
+  To allocate the potential array \(\phi = 0\) .Note that the array
+  should have \(N_y\) rows and \(N_x\) columns.
+\item
+  To find the indices which lie inside the circle of radius 0.35 using
+  meshgrid() by equation :
+\end{itemize}
+
+\begin{equation}
+X ^2 +Y ^2 \leq	 0.35^2
+\end{equation}
+
+\begin{itemize}
+\item
+  Then assign 1 V to those indices.
+\item
+  To plot a contour plot of potential \(\phi\) and to mark V=1 region in
+  red
+
+\end{itemize}
+
+\textit{\textbf{Code:}}
+\inputminted[linenos, breaklines]{python}{Code/1.py}
+	     \begin{figure}[!tbh]
+        \centering
+        \includegraphics[scale=0.8]{Plots/Fig1.png}  
+        \caption{Contour plot of initial potential}
+   \end{figure}
+   \paragraph{Results and Discussion :}\label{results-and-discussion1}
+
+   \begin{itemize}
+   \item
+     The contour plot of potential becomes smoother i.e it almost becomes
+     circular as we increase \(N_x\) and \(N_y\),because we get more no of
+     points,so the potential gradient is smoothed out between adjacent
+     points since there are more no of points
+   \end{itemize}
+   
+   \subsubsection{Part B :}\label{part-b}
+
+   \begin{itemize}
+   \item
+     To Perform the iterations
+   \item
+     To update the potential \(\phi\) according to Equation below using
+     vectorized code
+   \end{itemize}
+   
+   \begin{equation}
+           \phi_{i,j} = \frac{\phi_{i+1,j} + \phi_{i-1,j} + \phi_{i,j+1} + \phi_{i,j-1}}{4} 
+   \end{equation}
+   
+   \begin{itemize}
+   \item
+     To apply Boundary Conditions where there is no electrode, the gradient
+     of \(\phi\) should be tangential. This is implemented by Equation
+     given below , basically potential should not vary in the normal
+     direction so we equate the last but row or column to outermost row or
+     column correspondingly when applying boundary conditions for a side of
+     plate,implemented using Vectorized code
+   \end{itemize}
+   
+   \begin{equation}
+    \frac{\partial \phi}{\partial n} = 0
+   \end{equation}
+   
+   \begin{itemize}
+   \item
+     To plot the errors in semilog and loglog and observe how the errors
+     are evolving.
+   \end{itemize}
+
+\textit{\textbf{Code:}}
+\inputminted[linenos, breaklines]{python}{Code/2.py}
+     \begin{figure}[!tbh]
+      \centering
+      \includegraphics[scale=0.8]{Plots/Fig2.png}  
+      \includegraphics[scale=0.8]{Plots/Fig3.png}  
+      \caption{Semilog and Log-Log plots of Error vs No.of Iterations}
+ \end{figure}
+ 
+ \paragraph{Results and Discussion:}\label{results-and-discussion2}
+
+ \begin{itemize}
+ \item
+   As we observe the Figure 2a that error decreases linearly for higher
+   no of iterations,so from this we conclude that for large iterations
+   error decreases exponentially with No of iterations i.e it follows
+   \(Ae^{Bx}\) as it is a semilog plot
+ \item
+   And if we observe loglog plot the error is almost linearly decreasing
+   for smaller no of iterations so it follows \(a^x\) form since it is
+   loglog plot and follows some other pattern at larger iterations.
+ \item
+   So to conclude the error follows \(Ae^{Bx}\) for higher no of
+   iterations(\(\approx\) 500) and it follows \(a^x\) form for smaller
+   iterations which can be seen from figure 2a \& 2b respectively
+ \end{itemize}
+ 
+
+    \subsubsection{Part C :}\label{part-c}
+
+\begin{itemize}
+\item
+  To find the fit using Least squares for all iterations named as
+  \textbf{fit1}and for iterations \(\geq\) 500 named as \textbf{fit2}
+  separately and compare them.
+\item
+  As we know that error follows \(Ae^{Bx}\) at large iterations, we use
+  equation given below to fit the errors using least squares
+\end{itemize}
+
+\begin{equation}
+    logy = logA + Bx
+\end{equation}
+
+\begin{itemize}
+\item
+  To find the time constant of error function obtained for the two cases
+  using lstsq and compare them
+\item
+  To plot the two fits obtained and observe them
+\end{itemize}
+
+\textit{\textbf{Code:}}
+\inputminted[linenos, breaklines]{python}{Code/3.py}
+\begin{figure}[!tbh]
+ \centering
+ \includegraphics[scale=0.8]{Plots/Fig4.png}  
+ \caption{Semilog plot of Error vs No.of Iterations}
+\end{figure}
+
+\paragraph{Results and Discussion:}\label{results-and-discussion3}
+
+\begin{itemize}
+\item 
+Fit1 : A = 0.00631664 , B = -0.00371103\\
+Fit2 : A = 0.00629419 , B = -0.00370997
+\item
+  As we observe the Fit1's time constant and Fit2's time constant,
+  Fit2's is slightly higher than Fit1's time constant,so the error
+  decreases slowly at larger iterations compared to fit1.
+\item
+  Ideally the time constant for Fit2 should be larger than Fit1 with
+  good margin,since we take less no of points i.e stepsize \(N_x\) and
+  \(N_y\) being less,we get less difference between their time
+  constants,but if we increase the \(N_x\) and \(N_y\) to 100,100
+  respectively I tried and got these results :
+
+  \begin{itemize}
+  \item
+    Time Constant for Fit1 : 269.467s
+  \item
+    Time Constant for Fit2 (higher iterations from 500) : 269.544s
+  \end{itemize}
+\item
+  As we see that there is a significance difference between them, since
+  we increased the stepsize to 100!
+\item
+  So the time constant increase with increase in \(N_x\) and \(N_y\)
+\end{itemize}
+
+\subsubsection{Stopping Condition :}\label{stopping-condition}
+
+\begin{itemize}
+\item
+  To find the cumulative error for all iterations and compare them with
+  some error tolerance to stop the iteration.
+\item
+  So to find the cumulative error, we add all the absolute values of
+  errors for each iteration since worst case is, all errors add up
+\item
+  So we use the equations given below:
+\end{itemize}
+
+\begin{equation}
+    Error = \sum_{N+1}^{\infty}error_k
+  \end{equation}
+
+\begin{itemize}
+\item
+  The above error is approximated to
+\end{itemize}
+
+\begin{equation}
+    Error \approx -\frac{A}{B}exp(B(N+0.5))
+    \end{equation}
+
+where N is no of iteration
+
+\textit{\textbf{Code:}}
+\inputminted[linenos, breaklines]{python}{Code/4.py}
+\paragraph{Results and Discussion :}\label{results-and-discussion4}
+
+\begin{itemize}
+\item
+  From running the code, we get stopping condition as N : 3179 and the total cumulative
+  error till that iteration is \(9.98879e-8\)
+\item
+  And the last per iteration change in error: \(5.246138067141513e-10\)
+\item
+  So we observe that the profile was changing very little every
+  iteration, but it was continuously changing. So the cumulative error
+  was still large.
+\item
+  So that is why this method of solving Laplace's Equation is known to
+  be one of the worst available. This is because of the very slow
+  coefficient with which the error reduces.
+\end{itemize}
+\subsubsection{Part D: Surface Plot of
+Potential}\label{part-d-surface-plot-of-potential}
+
+\begin{itemize}
+\item
+  To do a 3-D surface plot of the potential.
+\item
+  To plot contour plot of potential
+\item
+  And analyse them and to comment about flow of currents
+\end{itemize}
+\textit{\textbf{Code:}}
+\inputminted[linenos, breaklines]{python}{Code/5.py}
+\begin{figure}[!tbh]
+ \centering
+ \includegraphics[scale=0.8]{Plots/Fig5.png}  
+ \includegraphics[scale=0.8]{Plots/Fig6.png}  
+ \caption{3-D Surface potential plot and Contour plot of potential}
+\end{figure}
+
+\paragraph{Results and Discussion:}\label{results-and-discussion5}
+
+\begin{itemize}
+\item
+  As we observe that the surface plot we conclude that after updating
+  the potential,the potential gradient is higher in down part of the
+  plate since, the down side is grounded and the electrode is at 1 V,so
+  there is high potential gradient from electrode to grounded plate.
+\item
+  And the upper part of the plate is almost 1 V since they didnt have
+  forced Voltage and their's were floating,so while applying updating we
+  replaced all points by average of surrounding points so the potential
+  is almost 1 V in the upper region of the plate!
+\item
+  Same observation we see using contour plot in 2 dimensions, we note
+  that there are gradients in down part of the plate and almost
+  negligible gradient in upper part of the plate.
+\end{itemize}
+
+\subsubsection{Part E : Vector Plot of Currents
+:}\label{part-e-vector-plot-of-currents}
+
+\begin{itemize}
+\item
+  To obtain the currents by computing the gradient.
+\item
+  The actual value of \(\sigma\) does not matter to the shape of the
+  current profile, so we set it to unity. Our equations are
+\end{itemize}
+
+\begin{equation}
+    J_x = -\frac{\partial \phi}{\partial x} 
+  \end{equation}
+
+\begin{equation}
+    J_y = -\frac{\partial \phi}{\partial y} 
+  \end{equation}
+
+\begin{itemize}
+\item
+  To program this we use these equations as follows:
+\end{itemize}
+
+\begin{equation}
+        J_{x,ij} = \frac{1}{2}(\phi_{i,j-1} - \phi_{i,j+1}) 
+    \end{equation}
+
+\begin{equation}
+        J_{y,ij} = \frac{1}{2}(\phi_{i-1,j} - \phi_{i+1,j}) 
+    \end{equation}
+  
+  \textit{\textbf{Code:}}
+  \inputminted[linenos, breaklines]{python}{Code/6.py}
+  \begin{figure}[!tbh]
+   \centering
+   \includegraphics[scale=0.8]{Plots/Fig7.png}  
+   \caption{Vector plot of current flow}
+  \end{figure}
+
+  
+  \paragraph{Results and Discussion:}\label{results-and-discussion6}
+
+  \begin{itemize}
+  \item
+    So as we noted that the potential gradient was higher in down region
+    of the plate, and we know that Electric field is the gradient of the
+    potential as given below
+  \end{itemize}
+  
+  \begin{equation}
+  \vec{E} = -\nabla{\phi}
+     \end{equation}
+  
+  \begin{itemize}
+  \item
+    So \(\vec{E}\) is larger where there is potential gradient is high and
+    is inverted since it is negative of the gradient!, So it is higher in
+    down region which is closer to bottom plate which is grounded
+  \item
+    And we know that
+  \end{itemize}
+  
+  \begin{equation}
+  \vec{J} = \sigma\vec{E}
+     \end{equation}
+  
+  \begin{itemize}
+  \item
+    So \(\vec{J}\) is higher and perpendicular to equipotential electrode
+    region i.e "Red dotted region" so the current is larger in down part
+    of the plate and perpendicular to the red dotted electrode region
+    since \(I\) = \(\vec{J}.\vec{A}\)
+  \item
+    So because of this most of the current flows from electrode to the
+    bottom plate which is grounded because of higher potential gradient.
+  \item
+    And there is almost zero current in upper part of the plate since
+    there is not much potential gradient as we observed from the surface
+    and contour plot of the potential \(\phi\)
+  \end{itemize}
+  
+    
+  
+    
+      
+      \section{Conclusion :}\label{results-and-conclusion}
+  
+  \begin{itemize}
+  \item
+    To conclude , Most of the current is in the narrow region at the
+    bottom.So that is what will get strongly heated.
+  \item
+    Since there is almost no current in the upper region of plate,the
+    bottom part of the plate gets hotter and temperature increases in down
+    region of the plate.
+  \item
+    And we know that heat generated is from \(\vec{J}.\vec{E}\) (ohmic
+    loss) so since \(\vec{J}\) and \(\vec{E}\) are higher in the bottom
+    region of the plate, there will more heat generation and temperature
+    rise will be present.
+  \item
+    So overall we looked the modelling of the currents in resistor in this
+    report ,and we observe that the best method to solve this is to
+    increase \(N_x\) and \(N_y\) to very high values(100 or \(\geq\)
+    100)and increase the no of iterations too, so that we get accurate
+    answers i.e currents in the resistor.
+  \item
+    But the tradeoff is this method of solving is very slow even though we
+    use vectorized code because the decrease in errors is very slow w.r.t
+    no of iterations.
+  \end{itemize}
+  \end{document}
