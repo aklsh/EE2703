@@ -41,10 +41,10 @@ def plotSignal(t, x, figTitle, style='b-', blockFig=False, showFig=True, saveFig
     plt.title(figTitle)
     plt.grid()
     plt.plot(t, x, style)
-    if showFig:
-        plt.show(block=blockFig)
-    if saveFig:
+    if(saveFig):
         plt.savefig(plotsDir + "Fig"+str(figNum)+".png")
+    if(showFig):
+        plt.show(block=blockFig)
     figNum+=1
 
 
@@ -182,7 +182,7 @@ def chirp(t):
 
 t = np.linspace(-PI, PI, 1025)[:-1]
 x = chirp(t)
-plotSignal(t, x, r"$cos(16(1.5 + \frac{t}{2\pi})t)$")
+plotSignal(t, x, r"$cos(16(1.5 + \frac{t}{2\pi})t)$", saveFig=True)
 fmax = 1.0/(t[1]-t[0])
 X = fft.fftshift(fft.fft(x))/1024.0
 w = np.linspace(-PI*fmax, PI*fmax, 1025)[:-1]
@@ -190,7 +190,7 @@ plotSpectrum(r"DFT of $cos(16(1.5 + \frac{t}{2\pi})t)$", w, X, 'b-', 'r.-', [-75
 
 n = np.arange(1024)
 x = chirp(t)*hammingWindow(n)
-plotSignal(t, x, r" $cos(16(1.5 + \frac{t}{2\pi})t) \cdot w(t)$")
+plotSignal(t, x, r" $cos(16(1.5 + \frac{t}{2\pi})t) \cdot w(t)$", saveFig=True)
 X = fft.fftshift(fft.fft(x))/1024.0
 plotSpectrum(r"DFT of $cos(16(1.5 + \frac{t}{2\pi})t) \cdot w(t)$", w, X, 'b-', 'r.-', [-75, 75], showFig=showAll, saveFig=True)
 
@@ -217,15 +217,15 @@ def plot3DSTFT(t, w, X, colorMap=cm.viridis, showFig=showAll, saveFig=True, bloc
     ax = fig.add_subplot(211, projection='3d')
     surf = ax.plot_surface(w, t, abs(X).T, cmap=colorMap)
     fig.colorbar(surf)
-    plt.ylabel(r"Frequency $\to$")
-    plt.xlabel(r"Time $\to$")
+    plt.xlabel(r"Frequency $\to$")
+    plt.ylabel(r"Time $\to$")
     plt.title(r"Magnitude $\|Y\|$")
 
     ax = fig.add_subplot(212, projection='3d')
     surf = ax.plot_surface(w, t, np.angle(X).T, cmap=colorMap)
     fig.colorbar(surf)
-    plt.ylabel(r"Frequency $\to$")
-    plt.xlabel(r"Time $\to$")
+    plt.xlabel(r"Frequency $\to$")
+    plt.ylabel(r"Time $\to$")
     plt.title(r"Angle $\angle Y$")
     if saveFig:
         plt.savefig(plotsDir+"Fig"+str(figNum)+".png")
