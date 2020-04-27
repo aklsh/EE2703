@@ -3,7 +3,7 @@
 Assignment 9 - EE2703 (Jan-May 2020)
 Done by Akilesh Kannan (EE18B122)
 Created on 20/03/20
-Last Modified on 20/03/20
+Last Modified on 27/04/20
 ------------------------------------
 '''
 
@@ -129,8 +129,8 @@ w = np.linspace(-PI*fmax, PI*fmax, 257)[:-1]
 plotSpectrum(r"Spectrum of $cos^3(0.86t) * w(t)$", w, Y, xLimit=[-8, 8], showFig=showAll)
 
 
-def estimateWandD(w, wo, Y, do):
-    wEstimate = np.sum(abs(Y)**2 * abs(w))/np.sum(abs(Y)**2) # weighted average
+def estimateWandD(w, wo, Y, do, pow=2):
+    wEstimate = np.sum(abs(Y)**pow * abs(w))/np.sum(abs(Y)**pow) # weighted average
     print("wo = {:.03f}\t\two (Estimated) = {:.03f}".format(wo, wEstimate))
 
     t = np.linspace(-PI, PI, 129)[:-1]
@@ -145,9 +145,10 @@ def estimateWandD(w, wo, Y, do):
 
 
 # Question 3 - Estimation of w, d in cos(wt + d)
-print("Question 3:")
 wo = 1.35
 d = PI/2
+
+print("Question 3:")
 t = np.linspace(-PI, PI, 129)[:-1]
 trueCos = np.cos(wo*t + d)
 fmax = 1.0/(t[1]-t[0])
@@ -157,12 +158,11 @@ y = fft.fftshift(y)
 Y = fft.fftshift(fft.fft(y))/128.0
 w = np.linspace(-PI*fmax, PI*fmax, 129)[:-1]
 plotSpectrum(r"Spectrum of $cos(\omega_o t + \delta) \cdot w(t)$", w, Y, xLimit=[-4, 4], showFig=showAll, saveFig=False)
-estimateWandD(w, wo, Y, d)
-
-print("\nQuestion 4:")
+estimateWandD(w, wo, Y, d, pow=1.75)
 
 # Question 4 - Estimation of w, d in noisy cos(wt + d)
 
+print("\nQuestion 4:")
 trueCos = np.cos(wo*t + d)
 noise = 0.1*np.random.randn(128)
 n = np.arange(128)
@@ -172,10 +172,11 @@ y = fft.fftshift(y)
 Y = fft.fftshift(fft.fft(y))/128.0
 w = np.linspace(-PI*fmax, PI*fmax, 129)[:-1]
 plotSpectrum(r"Spectrum of $(cos(\omega_o t + \delta) + noise) \cdot w(t)$", w, Y, xLimit=[-4, 4], showFig=showAll, saveFig=False)
-estimateWandD(w, wo, Y, d)
+estimateWandD(w, wo, Y, d, pow=2.5)
 
 # Question 5 - DFT of chirp
 
+# chirp function used
 def chirp(t):
     return np.cos(16*(1.5*t + (t**2)/(2*PI)))
 
@@ -195,10 +196,8 @@ plotSpectrum(r"DFT of $cos(16(1.5 + \frac{t}{2\pi})t) \cdot w(t)$", w, X, 'b-', 
 
 # Question 6 - Time evolution of DFT of chirp signal
 
-def STFT(chirp, t, batchSize=64):
-    '''
-        returns 2d array, ready for plotting
-    '''
+# calculates DFT of x, taking every batchSize samples
+def STFT(x, t, batchSize=64):
     t_batch = np.split(t, 1024//batchSize)
     x_batch = np.split(x, 1024//batchSize)
     X = np.zeros((1024//batchSize, batchSize), dtype=complex)
@@ -206,6 +205,7 @@ def STFT(chirp, t, batchSize=64):
         X[i] = fft.fftshift(fft.fft(x_batch[i]))/batchSize
     return X
 
+# plots the STFT
 def plot3DSTFT(t, w, X, colorMap=cm.viridis, showFig=showAll, saveFig=True, blockFig=False):
     global figNum
 
