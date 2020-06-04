@@ -1,28 +1,47 @@
-%
-% LaTeX report template 
-%
-
-% This is a comment: in LaTeX everything that in a line comes
-% after a "%" symbol is treated as comment
-
-\documentclass[11pt, a4paper]{article}
+\documentclass[11pt, a4paper, twoside]{article}
 \usepackage{graphicx}
 \usepackage{amsmath}
+\usepackage[margin=0.8in]{geometry}
 \usepackage{listings}
+\usepackage{float}
+\usepackage{fancyhdr}
+\usepackage{indentfirst}
+\usepackage[inline]{enumitem}
+\usepackage{tabularx}
+\usepackage{xcolor}
+\usepackage{array}
+\usepackage{minted}
+\usemintedstyle{vs}
+\usepackage[belowskip=0pt,aboveskip=0pt,font=small,labelfont=small]{caption}
+\captionsetup{width=\linewidth}
 
 
-\title{Assignment No 1} % Title
+\def \courseNumber {EE2703}
+\def \assignmentNumber {}
+\def \myName {Name}
+\def \rollNumber {Roll. No.}
 
-\author{Name of the students} % Author name
+\setlength\intextsep{0pt}
+\graphicspath{{Plots/}}
+\setlist[itemize]{noitemsep, topsep=0pt}
+\fancyhead[RO,LE]{\courseNumber : Assignment \assignmentNumber}
+\fancyhead[LO,RE]{\myName}
+\cfoot{\thepage}
 
-\date{\today} % Date for the report
-\begin{document}		
-		
-\maketitle % Insert the title, author and date
+\title{\courseNumber : Assignment \assignmentNumber}
+\author{\myName\ (\rollNumber)}
+\date{\today}
+
+\pagestyle{fancy}
+
+\begin{document}
+\maketitle
+
 \section{Section Title}
 %Create new section;it is autonumbered
 
- Input the contents of section \\
+ \textit{Input the contents of section.}
+ 
  In the first three semesters, you learned about C programming, some VERILOG and some assembly language programming. In this lab, you are going to learn to code in Python. Python is one of the most popular programming languages of today. It’s simplicity in syntax, availability of a large number of open source libraries and the amazing open source community support makes it the favorite for scientists. \\
 To insert image 
    \begin{figure}[!tbh]
@@ -36,8 +55,10 @@ To insert image
 % a number to the section
 	
   \textbf{Use textbf to get text in boldface.}
-  \textit{Use textit to get text in italics} \\
-  To insert inline command u can use \texttt{print("Hello World")} \\
+  \textit{Use textit to get text in italics}
+  
+  To insert inline command u can use \texttt{print("Hello World")}
+  
   To insert unordered list
   \begin{itemize}
   	\item One
@@ -54,6 +75,7 @@ To insert image
 \begin{equation*}
  V_{n1}-V_{n2}=L_{n1,n2} \frac{dI_{n1,n2}}{dt}
 \end{equation*}
+
 \section{Dealing with codes}
 To type block of code manually use the following block
 \begin{verbatim}	
@@ -61,14 +83,14 @@ To type block of code manually use the following block
 \end{verbatim}
 To import code from file : 
 \lstinputlisting[language=Python]{sample.py}
+
 \section{Labeling}
-You can label any equation or image or section . Use \texttt{label\{labelname\}}  you give the object you want to refer.\\
-To refer the labeled object use \texttt{ref\{labelname\}} \\
-Figure~\ref{fig:sample} is the sample image \\
+You can label any equation or image or section . Use \texttt{label\{labelname\}}  you give the object you want to refer.
+
+To refer the labeled object use \texttt{ref\{labelname\}}
+
+Figure~\ref{fig:sample} is the sample image
+
 Equation ~\ref{eq:1} is the sample equation 
 
 \end{document}
-
-
-
- 
