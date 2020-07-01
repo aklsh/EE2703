@@ -9,11 +9,12 @@ Each week is in separate folders. All material pertaining to that week is in tha
 ```
 .
 └── Week x
-      ├─ code.py      # python code [file]
-      ├─ report.pdf   # report pdf [file]
-      ├─ report.tex   # report tex [file]
-      ├─ plots/       # plots and figs [directory]
-      └─ misc         # other files [file/directory]
+      ├─ code.py                          # python code [file]
+      ├─ report.pdf                       # report pdf [file]
+      ├─ report.tex                       # report tex [file]
+      ├─ plots/                           # plots and figs [directory]
+      ├─ Assignment x - Question.pdf      # Question
+      └─ misc                             # other files [file/directory]
 ```      
 
 
