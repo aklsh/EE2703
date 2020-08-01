@@ -13,17 +13,14 @@ import sys
 from scipy.linalg import lstsq
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.rcParams['axes.formatter.useoffset'] = False
 
 # Define constants in SI units, wherever applicable
-Lx = 0.1        # width of tank
-Ly = 0.2        # height of tank
-Eo = 8.85e-12   # permittivity of free space
-Er = 2          # dielectric constant of water
-L = 1           # inductance of external inductor in H(enry)
-wo = 2*np.pi    # resonant frequency of circuit
-
-saveAll = True
-showAll = True
+Lx = 0.1                # width of tank
+Ly = 0.2                # height of tank
+Eo = 8.85e-12           # permittivity of free space
+Er = 2                  # dielectric constant of water
 
 def findExpFit(errors, iterations, printFit=False):
     '''
@@ -78,7 +75,7 @@ def findExpFit(errors, iterations, printFit=False):
     estimate = coeffMatrix@fit
     return fit, estimate
 
-def partD(M, N, step, k, accuracy, No):
+def solve(M, N, step, k, accuracy, No, plotAll=False):
     '''
     Function to solve Laplace's Equation
     in the tank.
@@ -102,6 +99,10 @@ def partD(M, N, step, k, accuracy, No):
         desired accuracy
     No: int
         maximum number of iterations
+    plotAll: bool
+        switch to plot data
+        True - plot data
+        False - no plotting
 
     Output
     ------
@@ -125,7 +126,9 @@ def partD(M, N, step, k, accuracy, No):
     y = np.linspace(0, Ly, N, dtype=float)
     X, Y = np.meshgrid(x, y)
 
-    plotContour(X, Y, phi, figTitle='Initial potential distribution')
+    if plotAll:
+        plotContour(X, Y, phi, figTitle='Initial potential distribution')
+
     iteration=[]     # iteration number
     error=[]         # error vector
 
@@ -136,7 +139,7 @@ def partD(M, N, step, k, accuracy, No):
 
         # updating the potentials
         phi[1:-1, 1:-1] = 0.25*(phi[1:-1, 0:-2]+phi[1:-1, 2:]+phi[0:-2, 1:-1]+phi[2:, 1:-1])
-        phi[k, 1:-1] = (Er*phi[k+1, 1:-1] + phi[k-1, 1:-1])*1.0/(1+Er)
+        phi[k, 1:-1] = (Er*oldPhi[k-1, 1:-1] + oldPhi[k+1, 1:-1])*1.0/(1+Er)
 
         # Applying Boundary Conditions
         phi[0, :] = 0.0          # bottom edge
@@ -153,18 +156,20 @@ def partD(M, N, step, k, accuracy, No):
         if currError <= accuracy:
             break
 
-    plotContour(X, Y, phi, figTitle='Potential distribution after updating')
+    if plotAll:
+        plotContour(X, Y, phi, figTitle='Potential distribution after updating')
 
-    # find LSTSQ Estimate for exponential region (>5000 iterations)
-    fit, estimate = findExpFit(error[5000:], iteration[5000:], printFit=True)
+        # find LSTSQ Estimate for exponential region (>5000 iterations)
+        fit, estimate = findExpFit(error[5000:], iteration[5000:], printFit=True)
 
-    # extrapolate the estimated error function till iteration 0
-    estimate = np.e**(fit[0]+np.multiply(fit[1], iteration))
+        # extrapolate the estimated error function till iteration 0
+        estimate = np.e**(fit[0]+np.multiply(fit[1], iteration))
 
-    plotSemilogy([iteration, iteration], [error, estimate], multiplePlots=True, labels=["Actual error", "Fitted error (iteration >= 5000)"], figTitle='Error vs. iteration', xLabel=r"iterations $\to$", yLabel=r'error $\to$')
+        plotSemilogy([iteration, iteration], [error, estimate], multiplePlots=True, labels=["Actual error", "Fitted error (iteration >= 5000)"], figTitle='Error vs. iteration', xLabel=r"iterations $\to$", yLabel=r'error $\to$')
 
     # calculate E
-    Ex, Ey = findEField(phi, step, M, N)
+    Ex, Ey = findEField(phi, step, M, N, plotAll)
+    checkContinuity(Ex, Ey, k, M, plotAll)
 
     # calculate charge densities
     sigma = findSigma(Ex, Ey, k)
@@ -172,9 +177,22 @@ def partD(M, N, step, k, accuracy, No):
     # calculate charges Qtop and Qfluid
     Q = findCharges(sigma, k, step)
 
-    return phi, Q, iteration[-1], error, Ex, Ey, sigma
+    # calculate angles with normal
+    angleBelow = findAngles(Ex[k-1, :], Ey[k-1, :])
+    angleAbove = findAngles(Ex[k, :], Ey[k, :])
 
-def findEField(phi, step, M, N):
+    if plotAll:
+        x = np.linspace(0, Lx, M-1, dtype=float)
+        sineAnglesBelow = np.sin(angleBelow)
+        sineAnglesAbove = np.sin(angleAbove)
+        tanAnglesBelow = np.tan(angleBelow)
+        tanAnglesAbove = np.tan(angleAbove)
+        plot(x, np.divide(sineAnglesBelow, sineAnglesAbove), r"Ratio of sine of angle with normal above and below", yLabel=r"$\frac{sin\,\theta_a}{sin\,\theta_b}$")
+        plot(x, np.divide(tanAnglesBelow, tanAnglesAbove), r"Ratio of tangent of angle with normal above and below", yLabel=r"$\frac{tan\,\theta_a}{tan\,\theta_b}$")
+
+    return phi, Q, iteration[-1], error
+
+def findEField(phi, step, M, N, plotAll):
     '''
     Calculates the x- and y- components of E-field at
     each point.
@@ -185,10 +203,14 @@ def findEField(phi, step, M, N):
         potential array
     step: float
         distance between 2 points on the grid
-    X: 2d numpy array
-        meshgrid X-coordinates
-    Y: 2d numpy array
-        meshgrid Y-coordinates
+    M: int
+        nodes along x-axis
+    N: int
+        nodes along y-axis
+    plotAll: bool
+        switch to plot data
+        True - plot data
+        False - no plotting
 
     Output
     ------
@@ -200,7 +222,7 @@ def findEField(phi, step, M, N):
     '''
     # Ex calculation
     #   *   *   *     row i
-    #     -   -
+    #     -   -     --> center of mesh cells
     #   *   *   *     row i+1
     #
     negativeGradientX = (phi[:, :-1] - phi[:, 1:])*(1.0/step)
@@ -208,9 +230,9 @@ def findEField(phi, step, M, N):
 
     # Ey calculation
     #   *       *
-    #       -
+    #       -       --> center of mesh cells
     #   *       *
-    #       -
+    #       -       --> center of mesh cells
     #   *       *
     # col i   col i+1
     #
@@ -218,10 +240,11 @@ def findEField(phi, step, M, N):
     Ey = (negativeGradientY[:, :-1] + negativeGradientY[:, 1:])*0.5
 
     # plot
-    x = np.linspace(0, Lx, M-1, dtype=float)
-    y = np.linspace(0, Ly, N-1, dtype=float)
-    X, Y = np.meshgrid(x, y)
-    plotQuiver(X, Y, Ex, Ey, r"Vector Plot of $\vec{E}$", blockFig=False)
+    if plotAll:
+        x = np.linspace(0, Lx, M-1, dtype=float)
+        y = np.linspace(0, Ly, N-1, dtype=float)
+        X, Y = np.meshgrid(x, y)
+        plotQuiver(X, Y, Ex, Ey, r"Vector Plot of $\vec{E}$", blockFig=False)
 
     return Ex, Ey
 
@@ -296,7 +319,7 @@ def findCharges(sigma, k, step):
     '''
     # top plate charge
     QTop = np.sum(sigma[0]*step)
-    print(QTop)
+
     # bottom surface charge
     QBottom = np.sum(sigma[2]*step)
 
@@ -308,9 +331,63 @@ def findCharges(sigma, k, step):
 
     # total charge in surface submerged in fluid
     QFluid = QBottom+QLeftFluid+QRightFluid
-    print(QFluid)
+
     Q = [QTop, QFluid]
     return Q
+
+def findAngles(Ex, Ey):
+    '''
+    Find the angle b/w y-axis and E-field at all
+    points on the grid
+
+    Input
+    -----
+    Ex: 2d numpy array
+        X-component of E-field
+    Ey: 2d numpy array
+        Y-component of E-field
+
+    Output
+    ------
+    angle: 2d numpy array
+        angle b/w E-field and y-axis at all points
+        on the grid
+
+    '''
+
+    # angle = atan(Ex/Ey)
+    ## NOTE: angle is calculated wrt y-axis
+    angles = np.arctan2(Ex, Ey)
+    return angles
+
+def checkContinuity(Ex, Ey, k, M, plotAll):
+    '''
+    Function to verify continuity of Dn and
+    Et across interface
+
+    Input
+    -----
+    Ex: 2d numpy array
+        X-component of E-field
+    Ey: 2d numpy array
+        Y-component of E-field
+    k: int
+        index corresponding to height of fluid
+    M: int
+        number of nodes across x-axis
+    plotAll: bool
+        switch to plot data
+        True - plot data
+        False - no plotting
+
+    '''
+    if plotAll:
+        x = np.linspace(0, Lx, M-1)
+        # checking Dn continuity
+        plot([x, x], [Ey[k-1, :]*Er, Ey[k, :]], multiplePlots=True, labels=["Below boundary", "Above boundary"], yLabel=r"$D_{normal}$", figTitle=r"Continuity of $D_{normal}$ across boundary")
+
+        # checking Et continuity
+        plot([x, x], [Ex[k-1, :], Ex[k, :]], multiplePlots=True, labels=["Below boundary", "Above boundary"], yLabel=r"$E_{tangential}$", figTitle=r"Continuity of $E_{tangential}$ across boundary")
 
 '''
 Helper functions
@@ -324,6 +401,9 @@ Helper functions
 figNum=0                # figure number
 plotsDir = 'plots/'     # plots directory
 # NOTE: create plots/ directory before running the code
+
+saveAll = True
+showAll = False
 
 def plotSemilogy(x, y, figTitle=None, blockFig=False, showFig=showAll, saveFig=saveAll, xLimit=None, yLimit=None, xLabel=r"$x\ \to$", yLabel=r"$y\ \to$", multiplePlots=False, labels=None):
     '''
@@ -394,8 +474,9 @@ def plot(x, y, figTitle=None, style='b-', blockFig=False, showFig=showAll, saveF
         plt.plot(x, y, style)
     else:
         i=0
+        style=["+", "o"]
         for a,b in zip(x, y):
-            plt.plot(a, b, label=labels[i])
+            plt.plot(a, b, style[i], label=labels[i])
             i=i+1
     if xLimit:
         plt.xlim(xLimit)
@@ -433,9 +514,19 @@ def plotQuiver(X, Y, compX, compY, figTitle=None, blockFig=False, showFig=showAl
 
 def main():
     step = 1e-3
-    h = 0.05*Ly
-    print(h/Ly)
-    partD(int(Lx/step), int(Ly/step), step, int(h/step), 1e-8, 100000)
+    accuracy = 1e-8
+    maxIter = 100000
+    h = np.linspace(0, 1, 10, dtype=float, endpoint=False)
+    k =h*(Ly/step)
+    Q = [None]*10
+    phi = [None]*10
+    for x in range(10):
+        phi[x], Q[x], *args = solve(int(Lx/step), int(Ly/step), step, int(k[x]), accuracy, maxIter, x==5)
+    QTop = [x[0] for x in Q]
+    QFluid =[x[1] for x in Q]
+
+    plot(h, QTop, r"$Q_{top}$ vs. h/$L_y$", yLabel=r"$Q_{top}$ in pC", xLabel=r"$h/L_y$")
+    plot(h, QFluid, r"$Q_{fluid}$ vs. h/$L_y$", yLabel="$Q_{fluid}$ in pC", xLabel="$h/L_y$")
 
 if __name__ == "__main__":
     main()
